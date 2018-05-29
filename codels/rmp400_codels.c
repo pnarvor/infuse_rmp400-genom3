@@ -13,7 +13,8 @@
  * rmp400_power_cord_connected.
  */
 genom_event
-trackControl(const rmp400_io *rmp, const rmp400_feedback *rs_data,
+trackControl(const RMP_DEV_STR *rmp[2],
+             const rmp400_data_str rs_data[2],
              const genom_context self)
 {
   /* skeleton sample: insert your code */

@@ -1,0 +1,15 @@
+# pkg-config file for rmp400 interface and codels library
+#
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+datarootdir=@datarootdir@
+idldir=@datadir@/idl
+
+Name: rmp400-genom3
+Description: rmp400 interface and codels library
+Version: @PACKAGE_VERSION@
+Requires: gyro-libs >= 3.0.99.0, openrobots-idl >= 1.1, rmp-libs >= 0.4.99, gyro-libs, felib
+Cflags: -I${includedir} -I${idldir}
+Libs: -L${libdir} -lrmp400_codels

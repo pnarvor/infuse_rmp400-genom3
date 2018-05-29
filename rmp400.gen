@@ -57,10 +57,10 @@ component rmp400 {
 
 
   ids {
-    rmp400_io rmp;
+    RMP_DEV_STR rmp[2];
     FE_STR fe;
     mode rs_mode;
-    rmp400_feedback rs_data;
+    data_str rs_data[2];
     or::genpos::cart_state robot;
     or::genpos::cart_config_var var;
     or::genpos::cart_speed ref;
@@ -83,7 +83,7 @@ component rmp400 {
     stack 65536;
     codel <start>initOdoAndAsserv(out ::ids, out StatusGeneric) 
       yield ether, odo;
-    codel <odo>odoAndAsserv(in rmp,
+    codel <odo>odoAndAsserv(inout rmp,
 			    in kinematics,
 			    in var_params,
 			    in log,
@@ -112,11 +112,9 @@ component rmp400 {
 
   /*----------------------------------------------------------------------*/
 
-  activity Init(in string<32> device = 
-		"10.40.40.40:8080": "robot device specification") {
+  activity Init() {
     doc "Connect to RMP400 robot";
-    codel <start>rmp400InitStart(in device,
-				 out rmp, out fe, out rs_data)
+    codel <start>rmp400InitStart(out rmp, out fe, out rs_data)
       yield init_main;
     codel <init_main>rmp400InitMain(inout rmp,
 				    inout fe,
