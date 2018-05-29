@@ -1,0 +1,173 @@
+/*
+ * Copyright (c) 2009-2017 CNRS/LAAS
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+/**
+ ** Author: Matthieu Herrb
+ ** Date: April 2009
+ **       updated for genom3, May 2018
+ **
+ **/
+
+#pragma require "openrobots-idl >= 1.1"
+
+#include <or/time/time.idl>
+
+/* internal structure for communication with RMP400 */
+native rmp400_io;
+native rmp400_feedback;
+native FE_STR;
+native GYRO_DATA;
+
+module rmp400 {
+
+  const double sec_period = 0.05; // 50ms -- MCU RTT is ~30ms
+
+  const double delay_gyro_omega = 0.3; // delay between command and measure, in seconds
+  const double kp_gyro_omega = 2.0;
+  const double kp_gyro_theta = 10.0;
+  const double ki_gyro_theta = 2.0;
+
+  // joystick
+  const double joystick_vgain = 1./(32768.0*32768.0); /* 1 m/s max */
+  const double joystick_wgain = 1./(32768.0*32768.0); /* 1 rad/s max */
+
+  enum mode {
+    mode_idle,
+    mode_motors_off,
+    mode_manual,
+    mode_track,
+    mode_emergency,
+    mode_power_coord
+  };
+
+  struct data_str {
+    double pitch_angle;
+    double pitch_rate;
+    double roll_angle;
+    double roll_rate;
+    double lw_velocity;
+    double rw_velocity;
+    double yaw_rate;
+    short servo_frames;
+    double integrated_left_wheel;
+    double integrated_right_wheel;
+    double integrated_fore_aft;
+    double integrated_yaw;
+    double left_torque;
+    double right_torque;
+    short operational_mode;
+    short controller_gain_schedule;
+    double ui_voltage;
+    double powerbase_voltage;
+    double battery_charge;
+    double velocity_command;
+    double turn_command;
+  };
+
+  struct status_str {
+    mode rs_mode;
+    data_str rs_data[2];
+  };
+
+  /* Kinematics of the robot */
+  struct kinematics_str {
+    double leftWheelRadius;
+    double rightWheelRadius;
+    double axisWidth;
+  };
+
+  /* Current dynamic parameters, from the nvram */
+  struct dynamic_str {
+    double vMax;
+    double wMax;
+    double linAccelMax;
+    double angAccelMax;
+  };
+
+  /* Coefficient proportionnel a la vitesse pour calculer l'erreur sur
+     le deplacement des roues */
+  struct var_params {
+    double coeffLin;
+    double coeffAng;
+    double coeffLinAng;
+  };
+
+  /* Gyro */
+  enum gyro_mode {
+    gyro_off,
+    gyro_on_if_motion,
+    gyro_on
+  };
+
+  struct gyro_params {
+    gyro_mode mode;
+    string port;
+    GYRO_TYPE type;
+    double latitude;
+    double woffset;
+  };
+
+  struct gyro {
+    boolean gyroOn;
+    gyro_mode currentMode;
+    double gyroToRobotOffset;
+    double gyroTheta;
+    double robotTheta;
+    double gyroOmega;
+  };
+
+  struct gyro_asserv {
+    boolean enabled; // is asserv enabled
+    boolean first; // first call to this function ?
+    boolean straight; // is in straight mode ?
+    double straight_angle; // angle for straight mode
+    double prev_reference;
+    double prev_measure;
+    double prev_command;
+    double prev_t;
+    double integral_s;
+    double jump_t; // last jump time
+  };
+
+  /* Acceleration limitation code */
+  struct max_accel {
+    double prev_vel_command;
+    double prev_vel_command_t;
+  };
+
+};
+
+/* begin COMMON between RMP models */
+module rmp {
+  enum model {
+    model_400,
+    model_440
+  };
+
+  struct status_str {
+    double receive_date;
+    model robot_model;
+    rmp400::mode rs_mode;
+    double propulsion_battery_level;
+    double aux_battery_level;
+    double pitch, roll, yaw_rate;
+    double v, w;
+    double v_target, w_target;
+    float right_front_vel, left_front_vel, right_rear_vel, left_rear_vel;
+    float right_front_pos, left_front_pos, right_rear_pos, left_rear_pos;
+    float right_front_torque, left_front_torque, right_rear_torque, left_rear_torque;
+  };
+};
+/* end COMMON between RMP models */

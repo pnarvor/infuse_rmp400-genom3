@@ -1,0 +1,199 @@
+/*
+ * Copyright (c) 2017-2018 CNRS
+ *
+ * Author: Matthieu Herrb - LAAS
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#pragma require "gyro-libs >= 3.0.99.0"
+#pragma require "openrobots-idl >= 1.1"
+
+#include "genpos.idl"
+#include "gyroLib/gyroTypes.idl"
+
+#include "rmp400Struct.idl"
+#include "or/hid/joystick.gen"
+#include "or/pose/pose_estimator.gen"
+
+component rmp400 {
+  version "0.1.99";
+  email "openrobots@laas.fr";
+  lang "c";
+  codels-require "rmp-libs >= 0.4.99, gyro-libs, felib";
+
+  exception already_initialized;
+  exception not_connected;
+  exception malloc_error;
+  exception bad_ref;
+  exception rmplib_error;
+  exception joystick_error;
+  exception gyro_error;
+  exception motors_off;
+  exception emergency_stop;
+  exception power_cord_connected;
+  exception port_not_found;
+  exception cmd_stop_track;
+  exception sys_error;
+
+  port in or::genpos::cart_speed cmd_vel;
+  port in or_joystick::state Joystick;
+  port out or_pose_estimator::state Pose;
+  port out status_str Status;
+  port out rmp::status_str StatusGeneric;
+
+  /*----------------------------------------------------------------------*/
+  native log_str;
+
+
+  ids {
+    rmp400_io rmp;
+    FE_STR fe;
+    mode rs_mode;
+    rmp400_feedback rs_data;
+    or::genpos::cart_state robot;
+    or::genpos::cart_config_var var;
+    or::genpos::cart_speed ref;
+    kinematics_str kinematics;
+    dynamic_str dynamics;
+    var_params var_params;
+    GYRO_DATA gyroId;
+    gyro gyro;
+    gyro_asserv gyro_asserv;
+    max_accel max_accel;
+    log_str log;
+  };
+
+  attribute set_var_params(in var_params);
+
+  /*----------------------------------------------------------------------*/
+
+  task MotionTask {
+    period sec_period s;
+    stack 65536;
+    codel <start>initOdoAndAsserv(out ::ids, out StatusGeneric) 
+      yield ether, odo;
+    codel <odo>odoAndAsserv(in rmp,
+			    in kinematics,
+			    in var_params,
+			    in log,
+			    in Joystick,
+			    inout gyroId,
+			    inout fe,
+			    inout robot,
+			    inout var,
+			    inout ref,
+			    inout max_accel,
+			    out rs_data,
+			    out rs_mode,
+			    out gyro,
+			    out gyro_asserv,
+			    out Pose,
+			    out Status,
+			    out StatusGeneric) yield ether, pause::odo, end;
+    codel <end>endOdoAndAsserv(inout rmp, inout rs_data) yield ether;
+    throw emergency_stop;
+  };
+
+  task TrackTask {
+    period sec_period s;
+    stack 8192;
+  };
+
+  /*----------------------------------------------------------------------*/
+
+  activity Init(in string<32> device = 
+		"10.40.40.40:8080": "robot device specification") {
+    doc "Connect to RMP400 robot";
+    codel <start>rmp400InitStart(in device,
+				 out rmp, out fe, out rs_data)
+      yield init_main;
+    codel <init_main>rmp400InitMain(inout rmp,
+				    inout fe,
+				    out rs_data,
+				    out rs_mode,
+				    out dynamics,
+				    out kinematics)
+      yield pause::init_main, ether;
+    throw already_initialized, malloc_error, rmplib_error;
+    task MotionTask;
+  };
+
+  /*----------------------------------------------------------------------*/
+
+  activity JoystickOn() {
+    doc "Activate joystick motion mode";
+    task MotionTask;
+    codel <start>rmp400JoystickOnStart(in Joystick, inout rs_mode) 
+      yield js_main;
+    codel <js_main>rmp400JoystickOnMain(in Joystick, in rs_mode) 
+      yield pause::js_main, inter;
+    codel <inter>rmp400JoystickOnInter(out rs_mode, out ref) yield ether;
+    throw bad_ref, rmplib_error, joystick_error, motors_off,
+      emergency_stop, power_cord_connected;
+    interrupts JoystickOn, Track;
+  };
+
+  /*----------------------------------------------------------------------*/
+
+  activity Track() {
+    doc  "Start tracking a reference port";
+    validate trackControl(in rmp, in rs_data);
+    codel <start>trackStart(inout rs_mode,
+			    port in cmd_vel) yield track_main, end;
+    codel <track_main>pumpReference(in robot,
+			      in rs_mode,
+			      port in cmd_vel,
+			      out ref) yield pause::track_main, end;
+    codel <end>smoothStopTrack(in robot,
+			       in dynamics,
+			       inout rs_mode,
+			       out ref) yield ether;
+    task TrackTask;
+    throw not_connected, port_not_found, bad_ref, cmd_stop_track,
+      motors_off, emergency_stop, power_cord_connected;
+    interrupts JoystickOn, Track;
+  };
+
+  function Stop() {
+    doc "Stop current Tracking";
+    interrupts Track;
+  };
+
+  /*----------------------------------------------------------------------*/
+
+  activity Gyro(in gyro_params params) {
+    doc "Gyro configuration";
+    task MotionTask;
+    codel <start>rmp400GyroExec(in params,
+				in robot,
+				inout gyro,
+				inout gyroId) yield ether;
+    throw gyro_error;
+    interrupts Gyro;
+  };
+
+  /*----------------------------------------------------------------------*/
+  /* Log */
+  function log(in string<64> path = "/tmp/rmp400.log": "Log file name") {
+    doc "Log RMP400 internal data";
+    codel log_start(in path, inout log);
+    throws sys_error;
+  };
+
+  function log_stop() {
+    doc "Stop logging";
+    codel log_stop(out log);
+  };
+  
+};
