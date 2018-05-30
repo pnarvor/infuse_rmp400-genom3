@@ -44,10 +44,10 @@ rmp440LogPose(struct rmp440_log_str *log, const or_pose_estimator_state *pose)
 		pose->ts.sec + pose->ts.nsec*1.0E-9,
 		pose->vel._value.vx, pose->vel._value.wz,
 		pose->pos._value.x, pose->pos._value.y, pose->pos._value.z,
-		pose->pos._value.qw, pose->pos._value.qx, 
+		pose->pos._value.qw, pose->pos._value.qx,
 		pose->pos._value.qy, pose->pos._value.qz,
 		pose->vel._value.vx, pose->vel._value.vy, pose->vel._value.vz,
-		pose->vel._value.wx, pose->vel._value.wy, pose->vel._value.wz) 
+		pose->vel._value.wx, pose->vel._value.wy, pose->vel._value.wz)
 	    < 0) {
 		printf ("%s: cannot log in %s\n", __func__, log->fileName);
 		return -1;
@@ -66,8 +66,8 @@ rmp400LogData(const struct rmp400_log_str *log,
     const struct cmd_str *cmd,
     const rmp400_data_str rs_data[2])
 {
-  
-  
+
+
 	if (fprintf(log->out, "%lf\t"
 	       "\t%.6g\t%.6g"
 	       "\t%.6g\t%.6g"
@@ -95,7 +95,7 @@ rmp400LogData(const struct rmp400_log_str *log,
 	       "\t%.6g\t%.6g"
 	       "\n",
 				/* timestamps */
-	       pose->ts.sec + pose->ts.nsec*1.0E-9, 
+	       pose->ts.sec + pose->ts.nsec*1.0E-9,
 				/* the KVH gyro */
 	       gyro->gyroTheta,
 	       gyro->gyroOmega,
@@ -147,10 +147,10 @@ rmp400LogData(const struct rmp400_log_str *log,
 	       rs_data[1].velocity_command,
 	       rs_data[1].turn_command) < 0)
     {
-      printf("%s: cannot log in %s\n", 
+      printf("%s: cannot log in %s\n",
 	  __func__, log->fileName);
       return -1;
     }
-  
+
   return 0;
 }

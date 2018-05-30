@@ -85,7 +85,7 @@ getJoystickSpeeds(struct or_joystick_state *joy,
 }
 
 /*
- * Check if done 
+ * Check if done
  */
 bool
 joystickQuit(struct or_joystick_state *joy)

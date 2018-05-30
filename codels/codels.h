@@ -24,7 +24,7 @@
  */
 typedef  struct cmd_str {
     double vReference, wReference; // commands received
-    double vCommand, wCommand;	   // commands sent after correction 
+    double vCommand, wCommand;	   // commands sent after correction
 } rmp400_cmd_str;
 
 
@@ -33,7 +33,7 @@ typedef  struct cmd_str {
  */
 
 /* joystick.c */
-extern void getJoystickSpeeds(struct or_joystick_state *joy, 
+extern void getJoystickSpeeds(struct or_joystick_state *joy,
     double *v, double *w, double *avmax, double *awmax);
 
 /* motion_helpers.c */

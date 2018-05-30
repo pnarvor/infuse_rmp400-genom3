@@ -64,7 +64,7 @@ pumpSpeedReference(const or_genpos_cart_state *robot,
  */
 genom_event
 trackStart(rmp400_mode *rs_mode, const rmp400_cmd_vel *cmd_vel,
-           const genom_context self)
+	   const genom_context self)
 {
 	printf("-- %s\n", __func__);
 	if (cmd_vel->read(self) != genom_ok)
@@ -85,8 +85,8 @@ trackStart(rmp400_mode *rs_mode, const rmp400_cmd_vel *cmd_vel,
  */
 genom_event
 pumpReference(const or_genpos_cart_state *robot, rmp400_mode rs_mode,
-              const rmp400_cmd_vel *cmd_vel, or_genpos_cart_speed *ref,
-              const genom_context self)
+	      const rmp400_cmd_vel *cmd_vel, or_genpos_cart_speed *ref,
+	      const genom_context self)
 {
 	/* Check if mode changed */
 	if (rs_mode != rmp400_mode_track) {
@@ -114,9 +114,9 @@ pumpReference(const or_genpos_cart_state *robot, rmp400_mode rs_mode,
  */
 genom_event
 smoothStopTrack(const or_genpos_cart_state *robot,
-                const rmp400_dynamic_str *dynamics,
-                rmp400_mode *rs_mode, or_genpos_cart_speed *ref,
-                const genom_context self)
+		const rmp400_dynamic_str *dynamics,
+		rmp400_mode *rs_mode, or_genpos_cart_speed *ref,
+		const genom_context self)
 {
 	printf("rmp400 smoothStopTrack\n");
 

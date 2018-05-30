@@ -51,7 +51,7 @@ double convertBattery(double voltage)
 		{ 100., 4.10 },
 		{ 100., 9.99 }};
 	double element = voltage / 20;
-	
+
 	for(i = 1; i < 14-1; ++i)
 	{
 		if (element < calib[i][1])
@@ -139,10 +139,10 @@ rmp400DataUpdate(RMP_DEV_STR **rmp, const rmp400_kinematics_str *kinematics,
 		dest->lw_velocity *= (kinematics->rightWheelRadius
 		    / RMP400_RIGHT_WHEEL_RADIUS);
 		dest->integrated_yaw *= (((kinematics->leftWheelRadius
-			/ RMP400_LEFT_WHEEL_RADIUS) + 
+			/ RMP400_LEFT_WHEEL_RADIUS) +
 		    (kinematics->rightWheelRadius
 			/ RMP400_RIGHT_WHEEL_RADIUS))/2.0);
-		
+
 		pthread_mutex_unlock(rmpGetMutex(rmp[i]));
 	}
 	/* If not data for several periods - set motors off */
@@ -177,7 +177,7 @@ rmp400DataUpdate(RMP_DEV_STR **rmp, const rmp400_kinematics_str *kinematics,
 	statusgen->left_front_torque = status->rs_data[0].left_torque;
 	statusgen->right_rear_torque = status->rs_data[1].right_torque;
 	statusgen->left_rear_torque = status->rs_data[1].left_torque;
-	
+
 #ifdef WITH_FELIB
 	/* Check emergency stop */
 	fe_get_status(fe);
@@ -186,7 +186,7 @@ rmp400DataUpdate(RMP_DEV_STR **rmp, const rmp400_kinematics_str *kinematics,
 	    status->rs_mode != RMP400_EMERGENCY &&
 	    status->rs_mode != RMP400_MOTORS_OFF) {
 		printf("Emergency pause!\n");
-		if (status->rs_mode != RMP400_MOTORS_OFF) 
+		if (status->rs_mode != RMP400_MOTORS_OFF)
 			status->rs_mode = statusgen->rs_mode = RMP400_EMERGENCY;
 	}
 #endif
@@ -238,7 +238,7 @@ rmp400VelocitySet(RMP_DEV_STR **rmp, struct cmd_str *cmd,
 	int i;
 	double v = cmd->vReference;
 	double w = cmd->wReference;
-    
+
 	/* Last safety check, in case uninitialized values are used */
 	if (fabs(v) > RMP400_VMAX) {
 		fprintf(stderr, "WARNING: v > VMAX: %lf\n", v);
@@ -428,4 +428,3 @@ control_yaw(rmp400_gyro_asserv *gyro,
 	gyro->prev_command = *yawr_command;
 	gyro->prev_t = t;
 }
-

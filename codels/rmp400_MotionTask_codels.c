@@ -138,8 +138,8 @@ yawToQuaternion(double yaw, or_t3d_pos *pos)
  */
 genom_event
 initOdoAndAsserv(rmp400_ids *ids,
-                 const rmp400_StatusGeneric *StatusGeneric,
-                 const genom_context self)
+		 const rmp400_StatusGeneric *StatusGeneric,
+		 const genom_context self)
 {
 	rmp_status_str *statusgen = StatusGeneric->data(self);
 	rmp400_kinematics_str *kinematics = &ids->kinematics;
@@ -206,18 +206,18 @@ initOdoAndAsserv(rmp400_ids *ids,
  */
 genom_event
 odoAndAsserv(RMP_DEV_STR *rmp[2],
-             const rmp400_kinematics_str *kinematics,
-             const rmp400_var_params *var_params,
-             const rmp400_log_str *log,
-             const rmp400_Joystick *Joystick, GYRO_DATA **gyroId,
-             FE_STR **fe, or_genpos_cart_state *robot,
-             or_genpos_cart_config_var *var, or_genpos_cart_speed *ref,
-             rmp400_max_accel *max_accel, rmp400_data_str rs_data[2],
-             rmp400_mode *rs_mode, rmp400_gyro *gyro,
-             rmp400_gyro_asserv *gyro_asserv, const rmp400_Pose *Pose,
-             const rmp400_Status *Status,
-             const rmp400_StatusGeneric *StatusGeneric,
-             const genom_context self)
+	     const rmp400_kinematics_str *kinematics,
+	     const rmp400_var_params *var_params,
+	     const rmp400_log_str *log,
+	     const rmp400_Joystick *Joystick, GYRO_DATA **gyroId,
+	     FE_STR **fe, or_genpos_cart_state *robot,
+	     or_genpos_cart_config_var *var, or_genpos_cart_speed *ref,
+	     rmp400_max_accel *max_accel, rmp400_data_str rs_data[2],
+	     rmp400_mode *rs_mode, rmp400_gyro *gyro,
+	     rmp400_gyro_asserv *gyro_asserv, const rmp400_Pose *Pose,
+	     const rmp400_Status *Status,
+	     const rmp400_StatusGeneric *StatusGeneric,
+	     const genom_context self)
 {
 	struct timespec ts;
 	rmp400_status_str *status = Status->data(self);
@@ -231,7 +231,7 @@ odoAndAsserv(RMP_DEV_STR *rmp[2],
 
 	robot->xRef = robot->xRob;
 	robot->yRef = robot->yRob;
-	
+
 	odoProba(robot, var,
 	    kinematics->axisWidth, var_params->coeffLinAng,
 	    rmp400_sec_period);	/* XXX could use the actual measured period */
@@ -247,7 +247,7 @@ odoAndAsserv(RMP_DEV_STR *rmp[2],
 	pose->pos._present = true;
 	pose->pos._value.x = robot->xRob;
 	pose->pos._value.y = robot->yRob;
-	pose->pos._value.z = 0.0; 	/* XXX */
+	pose->pos._value.z = 0.0;	/* XXX */
 	yawToQuaternion(robot->theta, &pose->pos._value); /* XXX */
 	pose->vel._present = true;
 	pose->vel._value.vx = robot->v;
@@ -270,7 +270,7 @@ odoAndAsserv(RMP_DEV_STR *rmp[2],
 		ref->v = 0.0;
 		ref->w = 0.0;
 		break;
-		
+
 	case rmp400_mode_manual:
 		Joystick->read(self);
 		getJoystickSpeeds(Joystick->data(self),
@@ -314,7 +314,7 @@ odoAndAsserv(RMP_DEV_STR *rmp[2],
 	if (log != NULL)
 		rmp400LogData(log, pose, gyro, gyro_asserv, &cmd, rs_data);
 
-	
+
 	/* Publish */
 	Pose->write(self);
 	Status->write(self);
@@ -336,7 +336,7 @@ odoAndAsserv(RMP_DEV_STR *rmp[2],
  */
 genom_event
 endOdoAndAsserv(RMP_DEV_STR *rmp[2], rmp400_data_str rs_data[2],
-                const genom_context self)
+		const genom_context self)
 {
   /* skeleton sample: insert your code */
   /* skeleton sample */ return rmp400_ether;
@@ -354,7 +354,7 @@ endOdoAndAsserv(RMP_DEV_STR *rmp[2], rmp400_data_str rs_data[2],
  */
 genom_event
 rmp400InitStart(RMP_DEV_STR *rmp[2], FE_STR **fe,
-                rmp400_data_str rs_data[2], const genom_context self)
+		rmp400_data_str rs_data[2], const genom_context self)
 {
 	pthread_t tid;
 	int i, n;
@@ -398,10 +398,10 @@ rmp400InitStart(RMP_DEV_STR *rmp[2], FE_STR **fe,
  */
 genom_event
 rmp400InitMain(RMP_DEV_STR *rmp[2], FE_STR **fe,
-               rmp400_data_str rs_data[2], rmp400_mode *rs_mode,
-               rmp400_dynamic_str *dynamics,
-               rmp400_kinematics_str *kinematics,
-               const genom_context self)
+	       rmp400_data_str rs_data[2], rmp400_mode *rs_mode,
+	       rmp400_dynamic_str *dynamics,
+	       rmp400_kinematics_str *kinematics,
+	       const genom_context self)
 {
 	/* Check motors status */
 	*rs_mode = rmp400_mode_idle;
@@ -421,7 +421,7 @@ rmp400InitMain(RMP_DEV_STR *rmp[2], FE_STR **fe,
  */
 genom_event
 rmp400JoystickOnStart(const rmp400_Joystick *Joystick,
-                      rmp400_mode *rs_mode, const genom_context self)
+		      rmp400_mode *rs_mode, const genom_context self)
 {
 	struct or_joystick_state *joy;
 
@@ -438,7 +438,7 @@ rmp400JoystickOnStart(const rmp400_Joystick *Joystick,
 	*rs_mode = rmp400_mode_manual;
 
 	return rmp400_js_main;
-	
+
 }
 
 /** Codel rmp400JoystickOnMain of activity JoystickOn.
@@ -451,7 +451,7 @@ rmp400JoystickOnStart(const rmp400_Joystick *Joystick,
  */
 genom_event
 rmp400JoystickOnMain(const rmp400_Joystick *Joystick,
-                     rmp400_mode rs_mode, const genom_context self)
+		     rmp400_mode rs_mode, const genom_context self)
 {
 	struct or_joystick_state *joy;
 
@@ -495,7 +495,7 @@ rmp400JoystickOnMain(const rmp400_Joystick *Joystick,
  */
 genom_event
 rmp400JoystickOnInter(rmp400_mode *rs_mode, or_genpos_cart_speed *ref,
-                      const genom_context self)
+		      const genom_context self)
 {
 
 	printf("%s\n", __func__);
@@ -514,8 +514,8 @@ rmp400JoystickOnInter(rmp400_mode *rs_mode, or_genpos_cart_speed *ref,
  */
 genom_event
 rmp400GyroExec(const rmp400_gyro_params *params,
-               const or_genpos_cart_state *robot, rmp400_gyro *gyro,
-               GYRO_DATA **gyroId, const genom_context self)
+	       const or_genpos_cart_state *robot, rmp400_gyro *gyro,
+	       GYRO_DATA **gyroId, const genom_context self)
 {
 
 	if (*gyroId == NULL) {

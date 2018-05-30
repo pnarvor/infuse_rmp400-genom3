@@ -37,8 +37,8 @@
  */
 genom_event
 trackControl(const RMP_DEV_STR *rmp[2],
-             const rmp400_data_str rs_data[2],
-             const genom_context self)
+	     const rmp400_data_str rs_data[2],
+	     const genom_context self)
 {
 	if (rmp == NULL)
 		return rmp400_not_connected(self);
@@ -55,14 +55,14 @@ trackControl(const RMP_DEV_STR *rmp[2],
  */
 genom_event
 log_start(const char path[64], rmp400_log_str **log,
-          const genom_context self)
+	  const genom_context self)
 {
 	FILE *f;
 
 	log_stop(log, self);
 
 	f = fopen(path, "w");
-	if (f == NULL) 
+	if (f == NULL)
 		return rmp400_sys_error(self);
 	fprintf(f, rmp400_log_header "\n");
 
@@ -73,10 +73,10 @@ log_start(const char path[64], rmp400_log_str **log,
 		errno = ENOMEM;
 		return rmp400_sys_error(self);
 	}
-	
+
 	(*log)->out = f;
 	return genom_ok;
-	
+
 }
 
 

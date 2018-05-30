@@ -58,35 +58,35 @@ static void Calc_var_whee(double dS, double dTh, double coeff, double LaX,
  ** sortie: posId - nouvelle position + incertitude
  **/
 
-void 
-odoProba(or_genpos_cart_state *robot, 
-    or_genpos_cart_config_var *var,  	
-    double lax, 	/* entre-axe */
+void
+odoProba(or_genpos_cart_state *robot,
+    or_genpos_cart_config_var *var,
+    double lax,		/* entre-axe */
     double coeff,
     double period)
 {
 	/* jacobiennes (J_h_Xr,J_h_dR) */
 	static double J_h_Xr[9], J_h_dR[6];
-	
+
 	/* tableaux auxilliaires*/
 	static double aux[9];
 	static double V_dep[3];
-	
+
 	double dS, dTh;
-	
+
 	dS = robot->v * period;
 	dTh = robot->w * period;
-	
+
 	/*
 	 * calcul des jacobiennes en fonction des deplacements des roues.
 	 */
 	calc_nouv_pos(robot, dS, dTh, lax, J_h_Xr, J_h_dR);
-	
+
 	/*
 	 * variance sur le deplacement
 	 */
 	Calc_var_whee(dS, dTh, coeff, lax, V_dep);
-	
+
 	/*
 	 * calcul de la variance sur Xrob
 	 */
@@ -95,28 +95,28 @@ odoProba(or_genpos_cart_state *robot,
 	dms_plus(aux, var->var, var->var, 3, 3);
 #if 0
 	printf ("dS %f dT %f coeff %f errx %f erry %f errt %f\n",
-	    dS, dTh, coeff, VARIANCE_TO_SIGMA3(var->var[0]), 
+	    dS, dTh, coeff, VARIANCE_TO_SIGMA3(var->var[0]),
 	    VARIANCE_TO_SIGMA3(var->var[2]), VARIANCE_TO_SIGMA3(var->var[5]));
 #endif
 }
 
 
-static void 
+static void
 calc_nouv_pos(or_genpos_cart_state *robot, double dS, double dTh,  double LaX,
     double *jxr, double *jdep)
-{ 
+{
 	double c, s, thetaMoy;
 
 	thetaMoy = robot->theta + dTh/2.;
 	c = cos(thetaMoy);
 	s = sin(thetaMoy);
-	
+
 	robot->theta = angleLimit(robot->theta + dTh);
 	robot->xRob += dS *c;
 	robot->yRob += dS *s;
 
 	/* jacobiennes */
-	
+
 	/* premiere ligne jxr */
 	jxr[0] = 1.0;
 	jxr[1] = 0;
@@ -129,7 +129,7 @@ calc_nouv_pos(or_genpos_cart_state *robot, double dS, double dTh,  double LaX,
 	jxr[6] = 0;
 	jxr[7] = 0;
 	jxr[8] = 1.0;
-	
+
 	/* premiere ligne de jdep */
 	jdep[0] = c/2. + dS*s/LaX;
 	jdep[1] = c/2. - dS*s/LaX;
@@ -141,16 +141,16 @@ calc_nouv_pos(or_genpos_cart_state *robot, double dS, double dTh,  double LaX,
 	jdep[5] = 1/LaX;
 }
 
-static void 
+static void
 Calc_var_whee(double dS, double dTh,
     double coeff, double LaX,
     double *vdep)
 {
 	double dsR, dsL;
-	
+
 	dsR = dS + LaX/2.0 * dTh;
 	dsL = dS - LaX/2.0 * dTh;
-	
+
 	vdep[0] = coeff * dsL * dsL;
 	vdep[1] = 0;
 	vdep[2] = coeff * dsR * dsR;
