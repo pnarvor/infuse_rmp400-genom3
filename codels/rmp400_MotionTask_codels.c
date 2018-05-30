@@ -225,8 +225,9 @@ odoAndAsserv(RMP_DEV_STR *rmp[2],
 	or_pose_estimator_state *pose = Pose->data(self);
 	genom_event report = genom_ok;
 	struct cmd_str cmd;
+	int i;
 
-	rmp400DataUpdate(rmp, kinematics, status, statusgen);
+	rmp400DataUpdate(rmp, kinematics, rs_data, rs_mode);
 	rmp400VelocityGet(rs_data, kinematics, robot);
 
 	robot->xRef = robot->xRob;
@@ -287,7 +288,7 @@ odoAndAsserv(RMP_DEV_STR *rmp[2],
 	if (report != genom_ok) {
 		/* In case an error occured,
 		   stop the robot and the tracking */
-		*rs_mode = statusgen->rs_mode = rmp400_mode_idle;
+		*rs_mode = rmp400_mode_idle;
 		ref->v = 0;
 		ref->w = 0;
 		return report;
@@ -316,7 +317,15 @@ odoAndAsserv(RMP_DEV_STR *rmp[2],
 
 	/* Publish */
 	Pose->write(self);
+
+	for (i = 0; i < 2; i++) {
+		memcpy(&status->rs_data[i], &rs_data[i],
+		    sizeof(rmp400_data_str));
+	}
+	status->rs_mode = *rs_mode;
 	Status->write(self);
+	statusgen->receive_date = t;
+	rmp400StatusgenUpdate(status, kinematics, statusgen);
 	StatusGeneric->write(self);
 
 #if 0

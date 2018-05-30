@@ -66,17 +66,13 @@ double convertBattery(double voltage)
 /*
  * rmp400DataUpdate - copy data from 2 motors block to the IDS
  */
-extern void
+int
 rmp400DataUpdate(RMP_DEV_STR **rmp, const rmp400_kinematics_str *kinematics,
-    rmp400_status_str *status, rmp_status_str *statusgen)
+    rmp400_data_str rs_data[2], rmp400_mode *rs_mode)
 {
 	static int noData[2] = {0, 0};
-	struct timeval tv;
-	gettimeofday(&tv, NULL); // FIXME should be measured more thoroughly in rmp-libs and with blocking reads
-	double receive_date = tv.tv_sec + tv.tv_usec*1e-6;
 
 	struct RMP_DATA_STR *data;
-	rmp400_data_str *dest;
 	int i;
 
 	for (i = 0; i < 2; i++) {
@@ -94,51 +90,49 @@ rmp400DataUpdate(RMP_DEV_STR **rmp, const rmp400_kinematics_str *kinematics,
 		}
 		prevFrame[i] = data->servo_frames;
 #endif
-		dest = &status->rs_data[i];
-
 		pthread_mutex_lock(rmpGetMutex(rmp[i]));
 
 		if (data->operational_mode != 1) {
 			pthread_mutex_unlock(rmpGetMutex(rmp[i]));
-			dest->operational_mode = data->operational_mode;
+			rs_data[i].operational_mode = data->operational_mode;
 			noData[i]++;
 			break;
 		}
 		noData[i] = 0;
-		dest->pitch_angle = RMP400_CONVERT_PITCH(data->pitch_angle);
-		dest->pitch_rate = RMP400_CONVERT_PITCH(data->pitch_rate);
-		dest->roll_angle = RMP400_CONVERT_ROLL(data->roll_angle);
-		dest->roll_rate = RMP400_CONVERT_ROLL(data->roll_rate);
-		dest->lw_velocity = RMP400_CONVERT_WHEEL_SPEED(data->lw_velocity);
-		dest->rw_velocity = RMP400_CONVERT_WHEEL_SPEED(data->rw_velocity);
-		dest->yaw_rate = RMP400_CONVERT_YAW(data->yaw_rate);
-		dest->servo_frames = data->servo_frames;
-		dest->integrated_left_wheel =
+		rs_data[i].pitch_angle = RMP400_CONVERT_PITCH(data->pitch_angle);
+		rs_data[i].pitch_rate = RMP400_CONVERT_PITCH(data->pitch_rate);
+		rs_data[i].roll_angle = RMP400_CONVERT_ROLL(data->roll_angle);
+		rs_data[i].roll_rate = RMP400_CONVERT_ROLL(data->roll_rate);
+		rs_data[i].lw_velocity = RMP400_CONVERT_WHEEL_SPEED(data->lw_velocity);
+		rs_data[i].rw_velocity = RMP400_CONVERT_WHEEL_SPEED(data->rw_velocity);
+		rs_data[i].yaw_rate = RMP400_CONVERT_YAW(data->yaw_rate);
+		rs_data[i].servo_frames = data->servo_frames;
+		rs_data[i].integrated_left_wheel =
 		   RMP400_CONVERT_INTEGRATED_POS(data->integrated_left_wheel);
-		dest->integrated_right_wheel =
+		rs_data[i].integrated_right_wheel =
 		   RMP400_CONVERT_INTEGRATED_POS(data->integrated_right_wheel);
-		dest->integrated_fore_aft =
+		rs_data[i].integrated_fore_aft =
 		   RMP400_CONVERT_INTEGRATED_POS(data->integrated_fore_aft);
-		dest->integrated_yaw =
+		rs_data[i].integrated_yaw =
 		   RMP400_CONVERT_INTEGRATED_TURN(data->integrated_yaw);
-		dest->left_torque = RMP400_CONVERT_TORQUE(data->left_torque);
-		dest->right_torque = RMP400_CONVERT_TORQUE(data->right_torque);
-		dest->operational_mode = data->operational_mode;
-		dest->controller_gain_schedule =
+		rs_data[i].left_torque = RMP400_CONVERT_TORQUE(data->left_torque);
+		rs_data[i].right_torque = RMP400_CONVERT_TORQUE(data->right_torque);
+		rs_data[i].operational_mode = data->operational_mode;
+		rs_data[i].controller_gain_schedule =
 		    data->controller_gain_schedule;
-		dest->ui_voltage = RMP400_CONVERT_UI_VOLTAGE(data->ui_voltage);
-		dest->powerbase_voltage =
+		rs_data[i].ui_voltage = RMP400_CONVERT_UI_VOLTAGE(data->ui_voltage);
+		rs_data[i].powerbase_voltage =
 		    RMP400_CONVERT_POWERBASE_VOLTAGE(data->powerbase_voltage);
-		dest->battery_charge = convertBattery(dest->powerbase_voltage);
-		dest->velocity_command = RMP400_CONVERT_FROM_RMP_SPEED(data->velocity_command); /* ?? */
-		dest->turn_command = RMP400_CONVERT_FROM_RMP_ANGLE(data->turn_command); /* ?? */
+		rs_data[i].battery_charge = convertBattery(rs_data[i].powerbase_voltage);
+		rs_data[i].velocity_command = RMP400_CONVERT_FROM_RMP_SPEED(data->velocity_command); /* ?? */
+		rs_data[i].turn_command = RMP400_CONVERT_FROM_RMP_ANGLE(data->turn_command); /* ?? */
 
 		/* Corrections if wheel radius changed */
-		dest->lw_velocity *= (kinematics->leftWheelRadius
+		rs_data[i].lw_velocity *= (kinematics->leftWheelRadius
 		    / RMP400_LEFT_WHEEL_RADIUS);
-		dest->lw_velocity *= (kinematics->rightWheelRadius
+		rs_data[i].lw_velocity *= (kinematics->rightWheelRadius
 		    / RMP400_RIGHT_WHEEL_RADIUS);
-		dest->integrated_yaw *= (((kinematics->leftWheelRadius
+		rs_data[i].integrated_yaw *= (((kinematics->leftWheelRadius
 			/ RMP400_LEFT_WHEEL_RADIUS) +
 		    (kinematics->rightWheelRadius
 			/ RMP400_RIGHT_WHEEL_RADIUS))/2.0);
@@ -146,16 +140,36 @@ rmp400DataUpdate(RMP_DEV_STR **rmp, const rmp400_kinematics_str *kinematics,
 		pthread_mutex_unlock(rmpGetMutex(rmp[i]));
 	}
 	/* If not data for several periods - set motors off */
-	if (status->rs_mode != rmp400_mode_motors_off &&
+	if (*rs_mode != rmp400_mode_motors_off &&
 	    (noData[0] > 10 || noData[1] > 10)) {
 		printf("No data - Motors OFF %d %d?\n",
-		       status->rs_data[0].operational_mode,
-		       status->rs_data[1].operational_mode);
+		       rs_data[0].operational_mode,
+		       rs_data[1].operational_mode);
 
-		status->rs_mode = statusgen->rs_mode = rmp400_mode_motors_off;
+		*rs_mode = rmp400_mode_motors_off;
 	}
 
-	statusgen->receive_date = receive_date;
+
+#ifdef WITH_FELIB
+	/* Check emergency stop */
+	fe_get_status(fe);
+	/* ignore pause if motors are off */
+	if ((fe_pins(fe) & FE_PAUSE) != 0 &&
+	    *rs_mode != rmp400_mode_emergency &&
+	    *rs_mode != rmp400_mode_motors_off) {
+		printf("Emergency pause!\n");
+		if (*rs_mode != rmp400_mode_motors_off)
+			*rs_mode = rmp400_mode_emergency;
+	}
+#endif
+	return 0;
+}
+
+void
+rmp400StatusgenUpdate(const rmp400_status_str *status,
+    const rmp400_kinematics_str *kinematics, rmp_status_str *statusgen)
+{
+	statusgen->receive_date = 0; /* XXX */
 	statusgen->propulsion_battery_level = fmin(status->rs_data[0].battery_charge, status->rs_data[1].battery_charge);
 	statusgen->aux_battery_level = -1.;
 	statusgen->pitch = (status->rs_data[0].pitch_angle + status->rs_data[1].pitch_angle)/2.0;
@@ -177,22 +191,7 @@ rmp400DataUpdate(RMP_DEV_STR **rmp, const rmp400_kinematics_str *kinematics,
 	statusgen->left_front_torque = status->rs_data[0].left_torque;
 	statusgen->right_rear_torque = status->rs_data[1].right_torque;
 	statusgen->left_rear_torque = status->rs_data[1].left_torque;
-
-#ifdef WITH_FELIB
-	/* Check emergency stop */
-	fe_get_status(fe);
-	/* ignore pause if motors are off */
-	if ((fe_pins(fe) & FE_PAUSE) != 0 &&
-	    status->rs_mode != RMP400_EMERGENCY &&
-	    status->rs_mode != RMP400_MOTORS_OFF) {
-		printf("Emergency pause!\n");
-		if (status->rs_mode != RMP400_MOTORS_OFF)
-			status->rs_mode = statusgen->rs_mode = RMP400_EMERGENCY;
-	}
-#endif
-	return;
 }
-
 
 /*----------------------------------------------------------------------*/
 /*

@@ -37,8 +37,10 @@ extern void getJoystickSpeeds(struct or_joystick_state *joy,
     double *v, double *w, double *avmax, double *awmax);
 
 /* motion_helpers.c */
-extern void rmp400DataUpdate(RMP_DEV_STR **, const rmp400_kinematics_str *,
-    rmp400_status_str *status, rmp_status_str *statusgen);
+extern int rmp400DataUpdate(RMP_DEV_STR **, const rmp400_kinematics_str *,
+    rmp400_data_str rs_data[2], rmp400_mode *rs_mode);
+extern void rmp400StatusgenUpdate(const rmp400_status_str *status,
+    const rmp400_kinematics_str *kinematics, rmp_status_str *statusgen);
 extern void rmp400VelocityGet(rmp400_data_str rs_data[2],
     const rmp400_kinematics_str *kinematics,
     or_genpos_cart_state *robot);
