@@ -431,6 +431,25 @@ control_yaw(rmp400_gyro_asserv *gyro,
 
 /*----------------------------------------------------------------------*/
 
+int
+mssleep(unsigned int ms)
+{
+        struct timespec s, r;
+
+        s.tv_sec = ms / 1000;
+        s.tv_nsec = (ms % 1000) * 1000000;
+
+        do {
+                if (nanosleep(&s, &r) == 0)
+                        break;
+                if (errno != EINTR)
+                        return -1;
+                s.tv_sec = r.tv_sec;
+                s.tv_nsec = r.tv_nsec;
+        } while (r.tv_sec != 0 || r.tv_nsec != 0);
+        return 0;
+}
+
 /*
  * This is executed in a task spawned at startup to read all messages
  * sent by the motor controllers
@@ -439,15 +458,12 @@ void *
 rmp400ReadTask(void* rmpDev)
 {
 	struct RMP_DEV_STR *rmp = (struct RMP_DEV_STR *)rmpDev;
-	struct timespec ts;
 
 	while (1) {
 		if (rmpReadPackets(rmp) < 0) {
 			fprintf(stderr, "rmp400ReadTask: read error\n");
 		}
-		ts.tv_sec = 0;
-		ts.tv_nsec = 50000000; /* 50 ms */
-		nanosleep(&ts, NULL);
+		mssleep(50);
 	}
 	return NULL;
 }
