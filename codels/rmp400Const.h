@@ -80,9 +80,9 @@
 #define RMP400_CONVERT_PITCH(x) (-DEG_TO_RAD((x)/7.8))
 #define RMP400_CONVERT_ROLL(x) (-DEG_TO_RAD((x)/7.8))
 #define RMP400_CONVERT_YAW(x) (-DEG_TO_RAD((x)/7.8)) /* don't know why inverted */
-#define RMP400_CONVERT_WHEEL_SPEED(x) (-((x)/332.0)/**SDI_F->wheelSizeCorrection XXX */)
-#define RMP400_CONVERT_INTEGRATED_POS(x) (-((x)/33215.0)/**SDI_F->wheelSizeCorrection XXX */)
-#define RMP400_CONVERT_INTEGRATED_TURN(x) (((x)*2*M_PI/112644.0)/**SDI_F->wheelSizeCorrection XXX */)
+#define RMP400_CONVERT_WHEEL_SPEED(x) (-((x)/332.0))
+#define RMP400_CONVERT_INTEGRATED_POS(x) (-((x)/33215.0))
+#define RMP400_CONVERT_INTEGRATED_TURN(x) (((x)*2*M_PI/112644.0))
 #define RMP400_CONVERT_POWERBASE_VOLTAGE(x) ((x)/4.0)
 #define RMP400_CONVERT_UI_VOLTAGE(x) (1.4+(x)*0.0125)
 #define RMP400_CONVERT_TORQUE(x) (-(x)/1094.0)

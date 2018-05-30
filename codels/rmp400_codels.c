@@ -1,7 +1,30 @@
+/*
+ * Copyright (c) 2017-2018 CNRS/LAAS
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
 #include "acrmp400.h"
 
 #include "rmp400_c_types.h"
 
+#include "codels.h"
+#include "rmp400_Log.h"
 
 /* --- Activity Track --------------------------------------------------- */
 
@@ -17,8 +40,9 @@ trackControl(const RMP_DEV_STR *rmp[2],
              const rmp400_data_str rs_data[2],
              const genom_context self)
 {
-  /* skeleton sample: insert your code */
-  /* skeleton sample */ return genom_ok;
+	if (rmp == NULL)
+		return rmp400_not_connected(self);
+	return genom_ok;
 }
 
 
@@ -33,8 +57,26 @@ genom_event
 log_start(const char path[64], rmp400_log_str **log,
           const genom_context self)
 {
-  /* skeleton sample: insert your code */
-  /* skeleton sample */ return genom_ok;
+	FILE *f;
+
+	log_stop(log, self);
+
+	f = fopen(path, "w");
+	if (f == NULL) 
+		return rmp400_sys_error(self);
+	fprintf(f, rmp400_log_header "\n");
+
+	*log = malloc(sizeof(**log));
+	if (*log == NULL) {
+		fclose(f);
+		unlink(path);
+		errno = ENOMEM;
+		return rmp400_sys_error(self);
+	}
+	
+	(*log)->out = f;
+	return genom_ok;
+	
 }
 
 
@@ -47,6 +89,11 @@ log_start(const char path[64], rmp400_log_str **log,
 genom_event
 log_stop(rmp400_log_str **log, const genom_context self)
 {
-  /* skeleton sample: insert your code */
-  /* skeleton sample */ return genom_ok;
+	if (*log == NULL)
+		return genom_ok;
+
+	fclose((*log)->out);
+	free(*log);
+	*log = NULL;
+	return genom_ok;
 }

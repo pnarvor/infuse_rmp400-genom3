@@ -70,7 +70,6 @@ extern void
 rmp400DataUpdate(RMP_DEV_STR **rmp, const rmp400_kinematics_str *kinematics,
     rmp400_status_str *status, rmp_status_str *statusgen)
 {
-	static int prevFrame[2] = {0, 0};
 	static int noData[2] = {0, 0};
 	struct timeval tv;
 	gettimeofday(&tv, NULL); // FIXME should be measured more thoroughly in rmp-libs and with blocking reads
@@ -93,8 +92,8 @@ rmp400DataUpdate(RMP_DEV_STR **rmp, const rmp400_kinematics_str *kinematics,
 				i, data->servo_frames);
 			return -1;
 		}
-#endif
 		prevFrame[i] = data->servo_frames;
+#endif
 		dest = &status->rs_data[i];
 
 		pthread_mutex_lock(rmpGetMutex(rmp[i]));
@@ -134,6 +133,16 @@ rmp400DataUpdate(RMP_DEV_STR **rmp, const rmp400_kinematics_str *kinematics,
 		dest->velocity_command = RMP400_CONVERT_FROM_RMP_SPEED(data->velocity_command); /* ?? */
 		dest->turn_command = RMP400_CONVERT_FROM_RMP_ANGLE(data->turn_command); /* ?? */
 
+		/* Corrections if wheel radius changed */
+		dest->lw_velocity *= (kinematics->leftWheelRadius
+		    / RMP400_LEFT_WHEEL_RADIUS);
+		dest->lw_velocity *= (kinematics->rightWheelRadius
+		    / RMP400_RIGHT_WHEEL_RADIUS);
+		dest->integrated_yaw *= (((kinematics->leftWheelRadius
+			/ RMP400_LEFT_WHEEL_RADIUS) + 
+		    (kinematics->rightWheelRadius
+			/ RMP400_RIGHT_WHEEL_RADIUS))/2.0);
+		
 		pthread_mutex_unlock(rmpGetMutex(rmp[i]));
 	}
 	/* If not data for several periods - set motors off */
@@ -194,21 +203,20 @@ rmp400DataUpdate(RMP_DEV_STR **rmp, const rmp400_kinematics_str *kinematics,
 
 
 void
-rmp400VelocityGet(rmp400_data_str *rs_data[2],
-    rmp400_kinematics_str *kinematics,
+rmp400VelocityGet(rmp400_data_str rs_data[2],
+    const rmp400_kinematics_str *kinematics,
     or_genpos_cart_state *robot)
 {
 	double leftv, rightv;
-	int i;
 
 	/* Mean angular speed of front and back wheels */
-	leftv = (rs_data[0]->lw_velocity + rs_data[1]->lw_velocity) / 2.0;
-	rightv = (rs_data[0]->rw_velocity + rs_data[1]->rw_velocity) / 2.0;
+	leftv = (rs_data[0].lw_velocity + rs_data[1].lw_velocity) / 2.0;
+	rightv = (rs_data[0].rw_velocity + rs_data[1].rw_velocity) / 2.0;
 	/* printf("%.2lf %.2lf\n", leftv, rightv); */
 
 	/* Angular speed of the robot */
 #ifdef USE_INTERNAL_GYRO
-	robot->w = (rs_data[0]->yaw_rate + rs_data[1]->yaw_rate) / 2.0;
+	robot->w = (rs_data[0].yaw_rate + rs_data[1].yaw_rate) / 2.0;
 #else
 	robot->w = (leftv - rightv) / kinematics->axisWidth;
 #endif
@@ -224,11 +232,13 @@ rmp400VelocityGet(rmp400_data_str *rs_data[2],
  *
  */
 genom_event
-rmp400VelocitySet(RMP_DEV_STR **rmp,
-    double v, double w, or_genpos_cart_speed *ref, const genom_context self)
+rmp400VelocitySet(RMP_DEV_STR **rmp, struct cmd_str *cmd,
+    const genom_context self)
 {
 	int i;
-
+	double v = cmd->vReference;
+	double w = cmd->wReference;
+    
 	/* Last safety check, in case uninitialized values are used */
 	if (fabs(v) > RMP400_VMAX) {
 		fprintf(stderr, "WARNING: v > VMAX: %lf\n", v);
@@ -248,11 +258,10 @@ rmp400VelocitySet(RMP_DEV_STR **rmp,
 		}
 	}
 
-	/* Save the set velocities */
-	
-	ref->v = v;
-	ref->w = w;
-	
+	/* Return the set velocities */
+	cmd->vCommand = v;
+	cmd->wCommand = w;
+
 	return genom_ok;
 }
 

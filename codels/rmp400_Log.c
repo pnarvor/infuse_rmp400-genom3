@@ -21,15 +21,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <rmp440/rmp440.h>
+#include <rmp/rmpLib.h>
 #include <fe/ftdi-emergency.h>
 
-#include "acrmp440.h"
+#include "acrmp400.h"
 
-#include "rmp440_c_types.h"
+#include "rmp400_c_types.h"
 
-#include "rmp440_Log.h"
 #include "codels.h"
+#include "rmp400_Log.h"
 
 #ifdef notyet
 int
@@ -58,112 +58,99 @@ rmp440LogPose(struct rmp440_log_str *log, const or_pose_estimator_state *pose)
 #endif
 
 
-
 int
-rmp440LogFeedback(const struct rmp440_log_str *log,
-    const rmp440_gyro *gyro,
-    const rmp440_gyro_asserv *gyro_asserv,
-    const rmp440_cmd_str *cmd,
-    const rmp440_feedback *data)
+rmp400LogData(const struct rmp400_log_str *log,
+    const or_pose_estimator_state *pose,
+    const rmp400_gyro *gyro,
+    const rmp400_gyro_asserv *gyro_asserv,
+    const struct cmd_str *cmd,
+    const rmp400_data_str rs_data[2])
 {
-
-	if (fprintf(log->out, "%lf"
-		"\t%.6g\t%.6g"
-		"\t%.6g\t%.6g"
-		"\t%.6g\t%.6g"
-		"\t%d\t%.6g"
-		/* start of feedback */
-		"\t0x%08x\t0x%08x\t0x%08x\t%08x"
-		"\t0x%08x\t0x%08x\t0x%08x\t%08x"
-		"\t%.6g\t%d\t%d\t%.6g\t%.6g"
-		"\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g"
-		"\t%d\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g"
-		"\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g"
-		"\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g"
-		"\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g"
-		"\t0x%08x\t0x%08x\t0x%08x\t%.6g\t0x%08x\t0x%08x"
-		"\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g\t%.6g"
-		"\n",
-		/* timestamps */
-		data->timestamp.tv_sec + data->timestamp.tv_nsec*1.0E-9,
-		/* the KVH gyro */
-		gyro->gyroTheta,
-		gyro->gyroOmega,
-		cmd->vReference, cmd->vCommand,
-		cmd->wReference, cmd->wCommand,
-		gyro_asserv->straight, gyro_asserv->straight_angle,
-		/* rmp440 feedback */
-		data->fault_status[0], data->fault_status[1],
-		data->fault_status[2], data->fault_status[3],
-		data->mcu_fault_status[0], data->mcu_fault_status[1],
-		data->mcu_fault_status[2], data->mcu_fault_status[3],
-		data->frame_count,
-		data->operational_state,
-		data->dynamic_response,
-		data->min_propulsion_batt_soc,
-		data->aux_batt_soc,
-		data->inertial_x_acc,
-		data->inertial_y_acc,
-		data->inertial_x_rate,
-		data->inertial_y_rate,
-		data->inertial_z_rate,
-		data->pse_pitch,
-		data->pse_pitch_rate,
-		data->pse_roll,
-		data->pse_roll_rate,
-		data->pse_yaw_rate,
-		data->pse_data_is_valid,
-		data->yaw_rate_limit,
-		data->vel_limit,
-		data->linear_accel,
-		data->linear_vel,
-		data->differential_wheel_vel,
-		data->right_front_vel,
-		data->left_front_vel,
-		data->right_rear_vel,
-		data->left_rear_vel,
-		data->right_front_pos,
-		data->left_front_pos,
-		data->right_rear_pos,
-		data->left_rear_pos,
-		data->linear_pos,
-		data->right_front_current,
-		data->left_front_current,
-		data->right_rear_current,
-		data->left_rear_current,
-		data->max_motor_current,
-		data->right_front_current_limit,
-		data->left_front_current_limit,
-		data->right_rear_current_limit,
-		data->left_rear_current_limit,
-		data->min_motor_current_limit,
-		data->front_base_batt_1_soc,
-		data->front_base_batt_2_soc,
-		data->rear_base_batt_1_soc,
-		data->rear_base_batt_2_soc,
-		data->front_base_batt_1_temp,
-		data->front_base_batt_2_temp,
-		data->rear_base_batt_1_temp,
-		data->rear_base_batt_2_temp,
-		data->vel_target,
-		data->yaw_rate_target,
-		data->angle_target,	/* only used on omni platforms */
-		data->aux_batt_voltage,
-		data->aux_batt_current,
-		data->aux_batt_temp,
-		data->abb_system_status,
-		data->abb_batt_status,
-		data->aux_batt_faults,
-		data->ccu_7p2_battery_voltage,
-		data->sp_sw_build_id,
-		data->uip_sw_build_id,
-		data->mcu_inst_power[0], data->mcu_inst_power[1],
-		data->mcu_inst_power[2], data->mcu_inst_power[3],
-		data->mcu_total_energy[0], data->mcu_total_energy[1],
-		data->mcu_total_energy[2], data->mcu_total_energy[3]) < 0)
-	{
-		printf ("%s: cannot log in %s\n", __func__, log->fileName);
-		return -1;
-	}
-	return 0;
+  
+  
+	if (fprintf(log->out, "%lf\t"
+	       "\t%.6g\t%.6g"
+	       "\t%.6g\t%.6g"
+	       "\t%.6g\t%.6g\t%d"
+	       "\t%.6g\t%.6g"
+	       "\t%.6g\t%.6g"
+	       "\t%.6g\t%.6g"
+	       "\t%.6g\t%.6g"
+	       "\t%.6g\t%.6g"
+	       "\t%.6g\t%.6g"
+	       "\t%.6g\t%.6g"
+	       "\t%d\t%d"
+	       "\t%d\t%.6g"
+	       "\t%.6g\t%.6g"
+	       "\t%.6g\t%.6g"
+	       "\t%.6g\t%.6g"
+	       "\t%.6g\t%.6g"
+	       "\t%.6g\t%.6g"
+	       "\t%.6g\t%.6g"
+	       "\t%.6g\t%.6g"
+	       "\t%.6g\t%.6g\t%.6g"
+	       "\t%d\t%d"
+	       "\t%d\t%.6g"
+	       "\t%.6g\t%.6g"
+	       "\t%.6g\t%.6g"
+	       "\n",
+				/* timestamps */
+	       pose->ts.sec + pose->ts.nsec*1.0E-9, 
+				/* the KVH gyro */
+	       gyro->gyroTheta,
+	       gyro->gyroOmega,
+	       cmd->vReference, cmd->vCommand,
+	       cmd->wReference, cmd->wCommand,
+	       gyro_asserv->straight, gyro_asserv->straight_angle,
+				/* the robot first axle */
+	       rs_data[0].integrated_yaw,
+	       rs_data[0].yaw_rate,
+	       rs_data[0].pitch_angle,
+	       rs_data[0].pitch_rate,
+	       rs_data[0].roll_angle,
+	       rs_data[0].roll_rate,
+	       rs_data[0].rw_velocity, // invert left/right
+	       rs_data[0].lw_velocity,
+	       rs_data[0].integrated_right_wheel, // invert left/right
+	       rs_data[0].integrated_left_wheel,
+	       rs_data[0].integrated_fore_aft,
+	       rs_data[0].right_torque, // invert left/right
+	       rs_data[0].left_torque,
+	       rs_data[0].servo_frames,
+	       rs_data[0].operational_mode,
+	       rs_data[0].controller_gain_schedule,
+	       rs_data[0].ui_voltage,
+	       rs_data[0].powerbase_voltage,
+	       rs_data[0].battery_charge,
+	       rs_data[0].velocity_command,
+	       rs_data[0].turn_command,
+				/* the robot second axle */
+	       rs_data[1].integrated_yaw,
+	       rs_data[1].yaw_rate,
+	       rs_data[1].pitch_angle,
+	       rs_data[1].pitch_rate,
+	       rs_data[1].roll_angle,
+	       rs_data[1].roll_rate,
+	       rs_data[1].rw_velocity, // invert left/right
+	       rs_data[1].lw_velocity,
+	       rs_data[1].integrated_right_wheel, // invert left/right
+	       rs_data[1].integrated_left_wheel,
+	       rs_data[1].integrated_fore_aft,
+	       rs_data[1].right_torque, // invert left/right
+	       rs_data[1].left_torque,
+	       rs_data[1].servo_frames,
+	       rs_data[1].operational_mode,
+	       rs_data[1].controller_gain_schedule,
+	       rs_data[1].ui_voltage,
+	       rs_data[1].powerbase_voltage,
+	       rs_data[1].battery_charge,
+	       rs_data[1].velocity_command,
+	       rs_data[1].turn_command) < 0)
+    {
+      printf("%s: cannot log in %s\n", 
+	  __func__, log->fileName);
+      return -1;
+    }
+  
+  return 0;
 }

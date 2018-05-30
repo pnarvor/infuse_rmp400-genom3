@@ -75,6 +75,7 @@ component rmp400 {
   };
 
   attribute set_var_params(in var_params);
+  attribute set_kinematics(in kinematics);
 
   /*----------------------------------------------------------------------*/
 

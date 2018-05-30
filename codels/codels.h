@@ -19,6 +19,14 @@
 #define DEBUG 1
 
 /*----------------------------------------------------------------------*/
+/*
+ * Structures
+ */
+typedef  struct cmd_str {
+    double vReference, wReference; // commands received
+    double vCommand, wCommand;	   // commands sent after correction 
+} rmp400_cmd_str;
+
 
 /*
  * Prototypes
@@ -31,11 +39,11 @@ extern void getJoystickSpeeds(struct or_joystick_state *joy,
 /* motion_helpers.c */
 extern void rmp400DataUpdate(RMP_DEV_STR **, const rmp400_kinematics_str *,
     rmp400_status_str *status, rmp_status_str *statusgen);
-extern void rmp400VelocityGet(rmp400_data_str *rs_data[2],
-    rmp400_kinematics_str *kinematics,
+extern void rmp400VelocityGet(rmp400_data_str rs_data[2],
+    const rmp400_kinematics_str *kinematics,
     or_genpos_cart_state *robot);
 extern genom_event rmp400VelocitySet(RMP_DEV_STR **rmp,
-    double v, double w, or_genpos_cart_speed *ref, const genom_context self);
+    struct cmd_str *cmd, const genom_context self);
 extern void bound_accels(rmp400_max_accel *acc, double t,
     double *vel_reference, double *ang_reference);
 extern void control_yaw(rmp400_gyro_asserv *gyro,

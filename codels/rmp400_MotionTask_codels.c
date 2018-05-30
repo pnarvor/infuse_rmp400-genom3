@@ -196,7 +196,7 @@ initOdoAndAsserv(rmp400_ids *ids,
 }
 
 
-/*----------------------------------------------------------------------
+/*----------------------------------------------------------------------*/
 
 /** Codel odoAndAsserv of task MotionTask.
  *
@@ -223,8 +223,21 @@ odoAndAsserv(RMP_DEV_STR *rmp[2],
 	rmp400_status_str *status = Status->data(self);
 	rmp_status_str *statusgen = StatusGeneric->data(self);
 	or_pose_estimator_state *pose = Pose->data(self);
+	genom_event report = genom_ok;
+	struct cmd_str cmd;
 
 	rmp400DataUpdate(rmp, kinematics, status, statusgen);
+	rmp400VelocityGet(rs_data, kinematics, robot);
+
+	robot->xRef = robot->xRob;
+	robot->yRef = robot->yRob;
+	
+	odoProba(robot, var,
+	    kinematics->axisWidth, var_params->coeffLinAng,
+	    rmp400_sec_period);	/* XXX could use the actual measured period */
+	gyroUpdate(gyroId, gyro, gyro_asserv, robot);
+
+	gyroUpdate(gyroId, gyro, gyro_asserv, robot);
 
 	/* fill pose */
 	clock_gettime(CLOCK_MONOTONIC, &ts);
@@ -244,11 +257,73 @@ odoAndAsserv(RMP_DEV_STR *rmp[2],
 	pose->vel._value.wy = 0;	/* XXX */
 	pose->vel._value.wz = robot->w;
 
+	/*
+	 * Asserv
+	 */
+	switch (*rs_mode) {
+	case rmp400_mode_motors_off:
+		/* No motion possible */
+		return rmp400_pause_odo;
+
+	case rmp400_mode_emergency:
+	case rmp400_mode_idle:
+		ref->v = 0.0;
+		ref->w = 0.0;
+		break;
+		
+	case rmp400_mode_manual:
+		Joystick->read(self);
+		getJoystickSpeeds(Joystick->data(self),
+		    &ref->v, &ref->w, &ref->linAccelMax, &ref->angAccelMax);
+		break;
+
+	case rmp400_mode_track:
+		/* ref has been updated by the trackTask */
+		break;
+
+	default:
+		printf("-- invalid_rs_mode %d\n", *rs_mode);
+		return rmp400_end;
+	}
+	if (report != genom_ok) {
+		/* In case an error occured,
+		   stop the robot and the tracking */
+		*rs_mode = statusgen->rs_mode = rmp400_mode_idle;
+		ref->v = 0;
+		ref->w = 0;
+		return report;
+	}
+
+	/* keep theoretical values */
+	cmd.vReference = ref->v;
+	cmd.wReference = ref->w;
+
+	/* Adjustements depending on the robot */
+	double t = ts.tv_sec + ts.tv_nsec*1e-9;
+	if (*rs_mode == rmp400_mode_track)
+		bound_accels(max_accel, t, &ref->v, &ref->w);
+
+	if (gyro->gyroOn)
+		control_yaw(gyro_asserv, t, ref->v, ref->w,
+		    gyro->gyroOmega, gyro->gyroTheta, &ref->w);
+
+	/* Send  commands to the wheels */
+	report = rmp400VelocitySet(rmp, &cmd, self);
+
+	/* log */
+	if (log != NULL)
+		rmp400LogData(log, pose, gyro, gyro_asserv, &cmd, rs_data);
+
+	
 	/* Publish */
 	Pose->write(self);
 	Status->write(self);
 	StatusGeneric->write(self);
-	
+
+#if 0
+	if (report != genom_ok)
+		return report;
+#endif
 	return rmp400_pause_odo;
 }
 
