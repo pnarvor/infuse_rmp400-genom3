@@ -235,7 +235,6 @@ odoAndAsserv(RMP_DEV_STR *rmp[2],
 	odoProba(robot, var,
 	    kinematics->axisWidth, var_params->coeffLinAng,
 	    rmp400_sec_period);	/* XXX could use the actual measured period */
-	gyroUpdate(gyroId, gyro, gyro_asserv, robot);
 
 	gyroUpdate(gyroId, gyro, gyro_asserv, robot);
 
