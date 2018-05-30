@@ -428,3 +428,26 @@ control_yaw(rmp400_gyro_asserv *gyro,
 	gyro->prev_command = *yawr_command;
 	gyro->prev_t = t;
 }
+
+/*----------------------------------------------------------------------*/
+
+/*
+ * This is executed in a task spawned at startup to read all messages
+ * sent by the motor controllers
+ */
+void *
+rmp400ReadTask(void* rmpDev)
+{
+	struct RMP_DEV_STR *rmp = (struct RMP_DEV_STR *)rmpDev;
+	struct timespec ts;
+
+	while (1) {
+		if (rmpReadPackets(rmp) < 0) {
+			fprintf(stderr, "rmp400ReadTask: read error\n");
+		}
+		ts.tv_sec = 0;
+		ts.tv_nsec = 50000000; /* 50 ms */
+		nanosleep(&ts, NULL);
+	}
+	return NULL;
+}
