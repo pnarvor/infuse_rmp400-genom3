@@ -54,7 +54,7 @@ trackControl(RMP_DEV_STR *rmp[2], const rmp400_data_str rs_data[2],
  */
 genom_event
 log_start(const char path[64], rmp400_log_str **log,
-	  const genom_context self)
+          const genom_context self)
 {
 	FILE *f;
 
