@@ -36,9 +36,8 @@
  * rmp400_power_cord_connected.
  */
 genom_event
-trackControl(const RMP_DEV_STR *rmp[2],
-	     const rmp400_data_str rs_data[2],
-	     const genom_context self)
+trackControl(RMP_DEV_STR *rmp[2], const rmp400_data_str rs_data[2],
+             const genom_context self)
 {
 	if (rmp == NULL)
 		return rmp400_not_connected(self);

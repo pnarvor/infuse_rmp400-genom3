@@ -147,7 +147,7 @@ component rmp400 {
 
   activity Track() {
     doc  "Start tracking a reference port";
-    validate trackControl(in rmp, in rs_data);
+    validate trackControl(inout rmp, in rs_data);
     codel <start>trackStart(inout rs_mode,
 			    port in cmd_vel) yield track_main, end;
     codel <track_main>pumpReference(in robot,
