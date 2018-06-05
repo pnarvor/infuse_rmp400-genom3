@@ -149,6 +149,7 @@ initOdoAndAsserv(rmp400_ids *ids,
 	rmp400_gyro_asserv *gyro_asserv = &ids->gyro_asserv;
 	rmp400_max_accel *max_accel = &ids->max_accel;
 
+	ids->rmp = NULL;
 	memset(statusgen, 0, sizeof(rmp_status_str));
 	statusgen->robot_model = rmp_model_400;
 
@@ -205,12 +206,12 @@ initOdoAndAsserv(rmp400_ids *ids,
  * Throws rmp400_emergency_stop.
  */
 genom_event
-odoAndAsserv(RMP_DEV_STR *rmp[2],
+odoAndAsserv(RMP_DEV_STR **rmp, FE_STR **fe,
              const rmp400_kinematics_str *kinematics,
              const rmp400_var_params *var_params,
              const rmp400_log_str *log,
              const rmp400_Joystick *Joystick, GYRO_DATA **gyroId,
-             FE_STR **fe, or_genpos_cart_state *robot,
+             or_genpos_cart_state *robot,
              or_genpos_cart_config_var *var, or_genpos_cart_speed *ref,
              rmp400_max_accel *max_accel, rmp400_data_str rs_data[2],
              rmp400_mode *rs_mode, rmp400_gyro *gyro,
@@ -227,7 +228,10 @@ odoAndAsserv(RMP_DEV_STR *rmp[2],
 	struct cmd_str cmd;
 	int i;
 
-	rmp400DataUpdate(rmp, kinematics, rs_data, rs_mode);
+	if (rmp == NULL || rmp[0] == NULL || rmp[1] == NULL)
+		return rmp400_pause_odo; /* not initialized yet */
+
+	rmp400DataUpdate(rmp, *fe, kinematics, rs_data, rs_mode);
 	rmp400VelocityGet(rs_data, kinematics, robot);
 
 	robot->xRef = robot->xRob;
@@ -343,7 +347,7 @@ odoAndAsserv(RMP_DEV_STR *rmp[2],
  * Throws rmp400_emergency_stop.
  */
 genom_event
-endOdoAndAsserv(RMP_DEV_STR *rmp[2], rmp400_data_str rs_data[2],
+endOdoAndAsserv(RMP_DEV_STR **rmp, rmp400_data_str rs_data[2],
                 const genom_context self)
 {
   /* skeleton sample: insert your code */
@@ -361,7 +365,7 @@ endOdoAndAsserv(RMP_DEV_STR *rmp[2], rmp400_data_str rs_data[2],
  *        rmp400_malloc_error, rmp400_rmplib_error.
  */
 genom_event
-rmp400InitStart(RMP_DEV_STR *rmp[2], FE_STR **fe,
+rmp400InitStart(RMP_DEV_STR **rmp, FE_STR **fe,
                 rmp400_data_str rs_data[2], const genom_context self)
 {
 	pthread_t tid;
@@ -405,7 +409,7 @@ rmp400InitStart(RMP_DEV_STR *rmp[2], FE_STR **fe,
  *        rmp400_malloc_error, rmp400_rmplib_error.
  */
 genom_event
-rmp400InitMain(RMP_DEV_STR *rmp[2], FE_STR **fe,
+rmp400InitMain(RMP_DEV_STR **rmp, FE_STR **fe,
                rmp400_data_str rs_data[2], rmp400_mode *rs_mode,
                rmp400_dynamic_str *dynamics,
                rmp400_kinematics_str *kinematics,

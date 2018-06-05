@@ -27,6 +27,7 @@ typedef  struct cmd_str {
     double vCommand, wCommand;	   // commands sent after correction
 } rmp400_cmd_str;
 
+typedef struct RMP_DEV_STR **RMP_DEV_TAB;
 
 /*
  * Prototypes
@@ -37,7 +38,8 @@ extern void getJoystickSpeeds(struct or_joystick_state *joy,
     double *v, double *w, double *avmax, double *awmax);
 
 /* motion_helpers.c */
-extern int rmp400DataUpdate(RMP_DEV_STR **, const rmp400_kinematics_str *,
+extern int rmp400DataUpdate(RMP_DEV_STR **, FE_STR *fe,
+    const rmp400_kinematics_str *,
     rmp400_data_str rs_data[2], rmp400_mode *rs_mode);
 extern void rmp400StatusgenUpdate(const rmp400_status_str *status,
     const rmp400_kinematics_str *kinematics, rmp_status_str *statusgen);
