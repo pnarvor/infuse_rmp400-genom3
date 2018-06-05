@@ -150,8 +150,6 @@ rmp400DataUpdate(RMP_DEV_STR **rmp, FE_STR *fe,
 		*rs_mode = rmp400_mode_motors_off;
 	}
 
-
-#ifdef WITH_FELIB
 	/* Check emergency stop */
 	fe_get_status(fe);
 	/* ignore pause if motors are off */
@@ -162,7 +160,6 @@ rmp400DataUpdate(RMP_DEV_STR **rmp, FE_STR *fe,
 		if (*rs_mode != rmp400_mode_motors_off)
 			*rs_mode = rmp400_mode_emergency;
 	}
-#endif
 	return 0;
 }
 
