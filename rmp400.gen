@@ -36,6 +36,7 @@ component rmp400 {
   exception not_connected;
   exception malloc_error;
   exception bad_ref;
+  exception felib_error;
   exception rmplib_error;
   exception joystick_error;
   exception gyro_error;
@@ -124,7 +125,7 @@ component rmp400 {
 				    out dynamics,
 				    out kinematics)
       yield pause::init_main, ether;
-    throw already_initialized, malloc_error, rmplib_error;
+    throw already_initialized, malloc_error, felib_error, rmplib_error;
     task MotionTask;
   };
 

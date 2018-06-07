@@ -373,8 +373,8 @@ rmp400InitStart(RMP_DEV_STR **rmp, FE_STR **fe,
 
 	/* connect emergency stop */
 	*fe = fe_init(NULL);
-	if (fe == NULL)
-		return rmp400_malloc_error(self);
+	if (*fe == NULL)
+		return rmp400_felib_error(self);
 
 	if ((n = rmpOpenAll(&rmp)) < 0) {
 		fe_end(*fe);

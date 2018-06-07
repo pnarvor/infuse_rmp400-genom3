@@ -143,7 +143,7 @@ rmp400DataUpdate(RMP_DEV_STR **rmp, FE_STR *fe,
 	/* If not data for several periods - set motors off */
 	if (*rs_mode != rmp400_mode_motors_off &&
 	    (noData[0] > 10 || noData[1] > 10)) {
-		printf("No data - Motors OFF %d %d?\n",
+		printf("%s: No data - Motors OFF %d %d?\n", __func__,
 		       rs_data[0].operational_mode,
 		       rs_data[1].operational_mode);
 
@@ -151,7 +151,10 @@ rmp400DataUpdate(RMP_DEV_STR **rmp, FE_STR *fe,
 	}
 
 	/* Check emergency stop */
-	fe_get_status(fe);
+	if (fe_get_status(fe) < 0) {
+		printf("%s: can't read emergency stop status\n", __func__);
+		*rs_mode = rmp400_mode_motors_off;
+	}
 	/* ignore pause if motors are off */
 	if ((fe_pins(fe) & FE_PAUSE) != 0 &&
 	    *rs_mode != rmp400_mode_emergency &&
