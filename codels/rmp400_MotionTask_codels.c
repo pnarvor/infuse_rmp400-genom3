@@ -154,6 +154,8 @@ initOdoAndAsserv(rmp400_ids *ids,
 	statusgen->robot_model = rmp_model_400;
 
 	ids->rs_mode = rmp400_mode_idle;
+	memset(&ids->rs_data[0], 0, sizeof(struct rmp400_status_str));
+	memset(&ids->rs_data[1], 0, sizeof(struct rmp400_status_str));
 
 	/* Kinematics */
 	kinematics->leftWheelRadius = RMP400_LEFT_WHEEL_RADIUS;
