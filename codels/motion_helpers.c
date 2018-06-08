@@ -67,7 +67,7 @@ double convertBattery(double voltage)
  * rmp400DataUpdate - copy data from 2 motors block to the IDS
  */
 int
-rmp400DataUpdate(RMP_DEV_STR **rmp, FE_STR *fe,
+rmp400DataUpdate(struct RMP_DEV_STR **rmp, FE_STR *fe,
     const rmp400_kinematics_str *kinematics,
     rmp400_data_str rs_data[2], rmp400_mode *rs_mode)
 {
@@ -232,7 +232,7 @@ rmp400VelocityGet(rmp400_data_str rs_data[2],
  *
  */
 genom_event
-rmp400VelocitySet(RMP_DEV_STR **rmp, struct cmd_str *cmd,
+rmp400VelocitySet(struct RMP_DEV_STR **rmp, struct cmd_str *cmd,
     const genom_context self)
 {
 	int i;

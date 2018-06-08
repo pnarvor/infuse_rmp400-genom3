@@ -25,7 +25,7 @@
 #include <or/time/time.idl>
 
 /* internal structure for communication with RMP400 */
-native RMP_DEV_STR;
+native RMP_DEV_TAB;
 native FE_STR;
 native GYRO_DATA;
 

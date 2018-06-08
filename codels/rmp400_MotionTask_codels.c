@@ -208,7 +208,7 @@ initOdoAndAsserv(rmp400_ids *ids,
  * Throws rmp400_emergency_stop.
  */
 genom_event
-odoAndAsserv(RMP_DEV_STR **rmp, FE_STR **fe,
+odoAndAsserv(RMP_DEV_TAB **rmp, FE_STR **fe,
              const rmp400_kinematics_str *kinematics,
              const rmp400_var_params *var_params,
              const rmp400_log_str *log,
@@ -223,6 +223,7 @@ odoAndAsserv(RMP_DEV_STR **rmp, FE_STR **fe,
              const genom_context self)
 {
 	struct timespec ts;
+	struct RMP_DEV_STR **r;
 	rmp400_status_str *status = Status->data(self);
 	rmp_status_str *statusgen = StatusGeneric->data(self);
 	or_pose_estimator_state *pose = Pose->data(self);
@@ -237,10 +238,15 @@ odoAndAsserv(RMP_DEV_STR **rmp, FE_STR **fe,
 	pose->ts.sec = ts.tv_sec;
 	pose->ts.nsec = ts.tv_nsec;
 
-	if (rmp == NULL || rmp[0] == NULL || rmp[1] == NULL)
+	if (*rmp != NULL)
+		r = (*rmp)->dev;
+	else
+		goto publish;
+	
+	if (r[0] == NULL || r[1] == NULL)
 		goto publish; /* not initialized yet */
 
-	rmp400DataUpdate(rmp, *fe, kinematics, rs_data, rs_mode);
+	rmp400DataUpdate(r, *fe, kinematics, rs_data, rs_mode);
 	rmp400VelocityGet(rs_data, kinematics, robot);
 
 	robot->xRef = robot->xRob;
@@ -317,7 +323,7 @@ odoAndAsserv(RMP_DEV_STR **rmp, FE_STR **fe,
 		    gyro->gyroOmega, gyro->gyroTheta, &ref->w);
 
 	/* Send  commands to the wheels */
-	report = rmp400VelocitySet(rmp, &cmd, self);
+	report = rmp400VelocitySet(r, &cmd, self);
 
 	/* log */
 	if (log != NULL)
@@ -352,7 +358,7 @@ publish:
  * Throws rmp400_emergency_stop.
  */
 genom_event
-endOdoAndAsserv(RMP_DEV_STR **rmp, rmp400_data_str rs_data[2],
+endOdoAndAsserv(RMP_DEV_TAB **rmp, rmp400_data_str rs_data[2],
                 const genom_context self)
 {
   /* skeleton sample: insert your code */
@@ -367,12 +373,14 @@ endOdoAndAsserv(RMP_DEV_STR **rmp, rmp400_data_str rs_data[2],
  * Triggered by rmp400_start.
  * Yields to rmp400_init_main.
  * Throws rmp400_emergency_stop, rmp400_already_initialized,
- *        rmp400_malloc_error, rmp400_rmplib_error.
+ *        rmp400_malloc_error, rmp400_felib_error,
+ *        rmp400_rmplib_error.
  */
 genom_event
-rmp400InitStart(RMP_DEV_STR **rmp, FE_STR **fe,
+rmp400InitStart(RMP_DEV_TAB **rmp, FE_STR **fe,
                 rmp400_data_str rs_data[2], const genom_context self)
 {
+	struct RMP_DEV_STR **r = (*rmp)->dev;
 	pthread_t tid;
 	int i, n;
 
@@ -381,7 +389,7 @@ rmp400InitStart(RMP_DEV_STR **rmp, FE_STR **fe,
 	if (*fe == NULL)
 		return rmp400_felib_error(self);
 
-	if ((n = rmpOpenAll(&rmp)) < 0) {
+	if ((n = rmpOpenAll(&r)) < 0) {
 		fe_end(*fe);
 		*fe = NULL;
 		return rmp400_rmplib_error(self);
@@ -389,19 +397,19 @@ rmp400InitStart(RMP_DEV_STR **rmp, FE_STR **fe,
 	printf("rmpOpenAll ok\n");
 	/* start read tasks */
 	for (i = 0; i < 2; i++) {
-		if (pthread_create(&tid, NULL, rmp400ReadTask, rmp[i]) < 0) {
+		if (pthread_create(&tid, NULL, rmp400ReadTask, r[i]) < 0) {
 			warn("pthread_create rmp400ReadTask");
 			fe_end(*fe);
 			*fe = NULL;
 			for (; i >= 0; i--)
-				rmpClose(rmp[i]);
+				rmpClose(r[i]);
 			free(rmp);
 			return rmp400_rmplib_error(self);
 		}
 		pthread_detach(tid);
 	}
 	for (i = 0; i < 2; i++)
-		if (rmpPowerOn(rmp[i]) < 0)
+		if (rmpPowerOn(r[i]) < 0)
 			return rmp400_rmplib_error(self);
 	return rmp400_init_main;
 }
@@ -411,10 +419,11 @@ rmp400InitStart(RMP_DEV_STR **rmp, FE_STR **fe,
  * Triggered by rmp400_init_main.
  * Yields to rmp400_pause_init_main, rmp400_ether.
  * Throws rmp400_emergency_stop, rmp400_already_initialized,
- *        rmp400_malloc_error, rmp400_rmplib_error.
+ *        rmp400_malloc_error, rmp400_felib_error,
+ *        rmp400_rmplib_error.
  */
 genom_event
-rmp400InitMain(RMP_DEV_STR **rmp, FE_STR **fe,
+rmp400InitMain(RMP_DEV_TAB **rmp, FE_STR **fe,
                rmp400_data_str rs_data[2], rmp400_mode *rs_mode,
                rmp400_dynamic_str *dynamics,
                rmp400_kinematics_str *kinematics,

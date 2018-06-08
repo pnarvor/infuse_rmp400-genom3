@@ -27,7 +27,9 @@ typedef  struct cmd_str {
     double vCommand, wCommand;	   // commands sent after correction
 } rmp400_cmd_str;
 
-typedef struct RMP_DEV_STR **RMP_DEV_TAB;
+typedef struct RMP_DEV_TAB {
+	struct RMP_DEV_STR *dev[2];
+} RMP_DEV_TAB;
 
 /*
  * Prototypes
@@ -38,7 +40,7 @@ extern void getJoystickSpeeds(struct or_joystick_state *joy,
     double *v, double *w, double *avmax, double *awmax);
 
 /* motion_helpers.c */
-extern int rmp400DataUpdate(RMP_DEV_STR **, FE_STR *fe,
+extern int rmp400DataUpdate(struct RMP_DEV_STR **, FE_STR *fe,
     const rmp400_kinematics_str *,
     rmp400_data_str rs_data[2], rmp400_mode *rs_mode);
 extern void rmp400StatusgenUpdate(const rmp400_status_str *status,
@@ -46,7 +48,7 @@ extern void rmp400StatusgenUpdate(const rmp400_status_str *status,
 extern void rmp400VelocityGet(rmp400_data_str rs_data[2],
     const rmp400_kinematics_str *kinematics,
     or_genpos_cart_state *robot);
-extern genom_event rmp400VelocitySet(RMP_DEV_STR **rmp,
+extern genom_event rmp400VelocitySet(struct RMP_DEV_STR **rmp,
     struct cmd_str *cmd, const genom_context self);
 extern void bound_accels(rmp400_max_accel *acc, double t,
     double *vel_reference, double *ang_reference);

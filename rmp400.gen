@@ -58,7 +58,7 @@ component rmp400 {
 
 
   ids {
-    RMP_DEV_STR rmp;
+    RMP_DEV_TAB rmp;
     FE_STR fe;
     mode rs_mode;
     data_str rs_data[2];
