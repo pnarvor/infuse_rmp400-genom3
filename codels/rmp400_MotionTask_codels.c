@@ -228,10 +228,17 @@ odoAndAsserv(RMP_DEV_STR **rmp, FE_STR **fe,
 	or_pose_estimator_state *pose = Pose->data(self);
 	genom_event report = genom_ok;
 	struct cmd_str cmd;
+	double t;
 	int i;
 
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	t = ts.tv_sec + ts.tv_nsec*1e-9;
+	memset(pose, 0, sizeof(or_pose_estimator_state));
+	pose->ts.sec = ts.tv_sec;
+	pose->ts.nsec = ts.tv_nsec;
+
 	if (rmp == NULL || rmp[0] == NULL || rmp[1] == NULL)
-		return rmp400_pause_odo; /* not initialized yet */
+		goto publish; /* not initialized yet */
 
 	rmp400DataUpdate(rmp, *fe, kinematics, rs_data, rs_mode);
 	rmp400VelocityGet(rs_data, kinematics, robot);
@@ -246,9 +253,6 @@ odoAndAsserv(RMP_DEV_STR **rmp, FE_STR **fe,
 	gyroUpdate(gyroId, gyro, gyro_asserv, robot);
 
 	/* fill pose */
-	clock_gettime(CLOCK_MONOTONIC, &ts);
-	pose->ts.sec = ts.tv_sec;
-	pose->ts.nsec = ts.tv_nsec;
 	pose->intrinsic = true;
 	pose->pos._present = true;
 	pose->pos._value.x = robot->xRob;
@@ -305,7 +309,6 @@ odoAndAsserv(RMP_DEV_STR **rmp, FE_STR **fe,
 	cmd.wReference = ref->w;
 
 	/* Adjustements depending on the robot */
-	double t = ts.tv_sec + ts.tv_nsec*1e-9;
 	if (*rs_mode == rmp400_mode_track)
 		bound_accels(max_accel, t, &ref->v, &ref->w);
 
@@ -320,7 +323,7 @@ odoAndAsserv(RMP_DEV_STR **rmp, FE_STR **fe,
 	if (log != NULL)
 		rmp400LogData(log, pose, gyro, gyro_asserv, &cmd, rs_data);
 
-
+publish:
 	/* Publish */
 	Pose->write(self);
 
