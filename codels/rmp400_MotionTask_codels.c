@@ -416,7 +416,7 @@ rmp400InitStart(RMP_DEV_TAB **rmp, FE_STR **fe,
 	}
 	free(r);
 	for (i = 0; i < 2; i++)
-		if (rmpPowerOn(r[i]) < 0) {
+		if (rmpPowerOn((*rmp)->dev[i]) != 0) {
 			printf("%s: failed to power on motor %d\n",
 			    __func__, i);
 			return rmp400_rmplib_error(self);
