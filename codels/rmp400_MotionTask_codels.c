@@ -248,7 +248,6 @@ odoAndAsserv(RMP_DEV_TAB **rmp, FE_STR **fe,
 
 	rmp400DataUpdate(r, *fe, kinematics, rs_data, rs_mode);
 	rmp400VelocityGet(rs_data, kinematics, robot);
-
 	robot->xRef = robot->xRob;
 	robot->yRef = robot->yRob;
 
@@ -380,16 +379,21 @@ genom_event
 rmp400InitStart(RMP_DEV_TAB **rmp, FE_STR **fe,
                 rmp400_data_str rs_data[2], const genom_context self)
 {
-	struct RMP_DEV_STR **r = (*rmp)->dev;
+	struct RMP_DEV_STR **r;
 	pthread_t tid;
 	int i, n;
+
+	*rmp = malloc(sizeof(struct RMP_DEV_TAB));
+	if (*rmp == NULL)
+		return rmp400_malloc_error(self);
 
 	/* connect emergency stop */
 	*fe = fe_init(NULL);
 	if (*fe == NULL)
 		return rmp400_felib_error(self);
 
-	if ((n = rmpOpenAll(&r)) < 0) {
+	if ((n = rmpOpenAll(&r)) != 2) {
+		printf("%s: rmpOpenAll failed: %d\n", __func__, n);
 		fe_end(*fe);
 		*fe = NULL;
 		return rmp400_rmplib_error(self);
@@ -397,20 +401,26 @@ rmp400InitStart(RMP_DEV_TAB **rmp, FE_STR **fe,
 	printf("rmpOpenAll ok\n");
 	/* start read tasks */
 	for (i = 0; i < 2; i++) {
+		(*rmp)->dev[i] = r[i];
 		if (pthread_create(&tid, NULL, rmp400ReadTask, r[i]) < 0) {
 			warn("pthread_create rmp400ReadTask");
 			fe_end(*fe);
 			*fe = NULL;
 			for (; i >= 0; i--)
 				rmpClose(r[i]);
-			free(rmp);
+			free(*rmp);
+			*rmp = NULL;
 			return rmp400_rmplib_error(self);
 		}
 		pthread_detach(tid);
 	}
+	free(r);
 	for (i = 0; i < 2; i++)
-		if (rmpPowerOn(r[i]) < 0)
+		if (rmpPowerOn(r[i]) < 0) {
+			printf("%s: failed to power on motor %d\n",
+			    __func__, i);
 			return rmp400_rmplib_error(self);
+		}
 	return rmp400_init_main;
 }
 
