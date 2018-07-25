@@ -183,6 +183,29 @@ a|.Data structure
 
 '''
 
+[[PoseInfuse]]
+=== PoseInfuse (out)
+
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Data structure
+[disc]
+ * `struct ::asn1::bitstream` `PoseInfuse`
+ ** `struct ::asn1::header` `header`
+ *** `unsigned long` `seq`
+ *** `struct ::or::time::ts` `stamp`
+ **** `unsigned long` `sec`
+ **** `unsigned long` `nsec`
+ *** `string` `frame_id`
+ ** `string` `type`
+ ** `octet` `serialization_method`
+ ** `sequence< octet >` `data`
+
+|===
+
+'''
+
 == Services
 
 [[set_var_params]]
@@ -476,6 +499,7 @@ a|.Context
 * Updates port `<<Pose>>`
 * Updates port `<<Status>>`
 * Updates port `<<StatusGeneric>>`
+* Updates port `<<PoseInfuse>>`
 a|.Throws
 [disc]
  * `exception ::rmp400::emergency_stop`

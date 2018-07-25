@@ -26,11 +26,14 @@
 #include "or/hid/joystick.gen"
 #include "or/pose/pose_estimator.gen"
 
+#pragma require "infuse_types-genom3 >= 0.1"
+#include "infuse_types/asn1/bitstream.idl"
+
 component rmp400 {
   version "0.1.99";
   email "openrobots@laas.fr";
   lang "c";
-  codels-require "rmp-libs >= 0.4.99, gyro-libs, felib, MTI-clients";
+  codels-require "rmp-libs >= 0.4.99, gyro-libs, felib, MTI-clients, cdff_types";
 
   exception already_initialized;
   exception not_connected;
@@ -54,6 +57,8 @@ component rmp400 {
   port out or_pose_estimator::state Pose;
   port out status_str Status;
   port out rmp::status_str StatusGeneric;
+
+  port out asn1::bitstream PoseInfuse;
 
   /*----------------------------------------------------------------------*/
   native log_str;
@@ -90,7 +95,8 @@ component rmp400 {
   task MotionTask {
     period sec_period s;
     stack 65536;
-    codel <start>initOdoAndAsserv(out ::ids, out StatusGeneric) 
+    codel <start>initOdoAndAsserv(out ::ids, out PoseInfuse,
+                out StatusGeneric) 
       yield ether, odo;
     codel <odo>odoAndAsserv(inout rmp,
 			    inout fe,
@@ -112,6 +118,7 @@ component rmp400 {
                 inout odoMode,
                 inout robot3d,
 			    out Pose,
+                out PoseInfuse,
 			    out Status,
 			    out StatusGeneric) yield ether, pause::odo, end;
     codel <end>endOdoAndAsserv(inout rmp, inout rs_data) yield ether;
