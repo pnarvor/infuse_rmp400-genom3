@@ -385,6 +385,35 @@ Gyro bias estimation
 
 '''
 
+[[InitMTI]]
+=== InitMTI (activity)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Inputs
+[disc]
+ * `struct ::rmp400::mti_params` `params`
+ ** `enum ::rmp400::mti_mode` `mode` ∈ { `mti_off`, `mti_on_if_motion`, `mti_on` }
+ ** `string` `port`
+ ** `long` `outputMode`
+ ** `long` `outputFormat`
+
+a|.Throws
+[disc]
+ * `exception ::rmp400::emergency_stop`
+
+ * `exception ::rmp400::mti_error`
+
+a|.Context
+[disc]
+  * In task `<<MotionTask>>`
+  (frequency 20.0 _Hz_)
+|===
+
+Init and configure MTI sensor
+
+'''
+
 [[log]]
 === log (function)
 

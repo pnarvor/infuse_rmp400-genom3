@@ -40,6 +40,8 @@ extern "C" {
 #include <gyroLib/gyro.h>
 }
 
+#include <MTI-clients/MTI.h>
+
 #include "acrmp400.h"
 
 #include "rmp400_c_types.h"
@@ -219,7 +221,8 @@ odoAndAsserv(RMP_DEV_TAB **rmp, FE_STR **fe,
              or_genpos_cart_config_var *var, or_genpos_cart_speed *ref,
              rmp400_max_accel *max_accel, rmp400_data_str rs_data[2],
              rmp400_mode *rs_mode, rmp400_gyro *gyro,
-             rmp400_gyro_asserv *gyro_asserv, const rmp400_Pose *Pose,
+             rmp400_gyro_asserv *gyro_asserv, MTI_DATA **mtiHandle,
+             rmp400_mti *mti, const rmp400_Pose *Pose,
              const rmp400_Status *Status,
              const rmp400_StatusGeneric *StatusGeneric,
              const genom_context self)
@@ -604,6 +607,97 @@ rmp440GyroBiasUpdate(int32_t nbMeasures,
 
 	if (gyroUpdateWOffset(*gyroId, nbMeasures) != 0)
         return rmp400_gyro_error(self);
+
+    return rmp400_ether;
+}
+
+
+/* --- Activity InitMTI ------------------------------------------------- */
+
+/** Codel rmp400MTIopen of activity InitMTI.
+ *
+ * Triggered by rmp400_start.
+ * Yields to rmp400_ether.
+ * Throws rmp400_emergency_stop, rmp400_mti_error.
+ */
+genom_event
+rmp400MTIopen(const rmp400_mti_params *params, MTI_DATA **mtiHandle,
+              rmp400_mti *mti, rmp400_mti_config *mtiConfig,
+              const genom_context self)
+{
+    MTI* mtiHandleP = (MTI*)*mtiHandle;
+    if(mtiHandle == NULL)
+        return rmp400_mti_error(self);
+
+    // Checking input parameters
+    switch(params->outputMode)
+    {
+        default:
+            printf("Error MTI open : invalid outputMode parameter. Candidates are:\n\
+                    MTI_OPMODE_CALIBRATED  = 2\n\
+                    MTI_OPMODE_ORIENTATION = 4\n\
+                    MTI_OPMODE_BOTH        = 6\n");
+            return rmp400_mti_error(self);
+            break;
+        case (int)MTI_OPMODE_CALIBRATED:
+            break;
+        case (int)MTI_OPMODE_ORIENTATION:
+            break;
+        case (int)MTI_OPMODE_BOTH:
+            break;
+    }
+    switch(params->outputFormat)
+    {
+        default:
+            printf("Error MTI open : invalid outputFormat parameter. Candidates are:\n\
+                    MTI_OPFORMAT_QUAT  = 0\n\
+                    MTI_OPFORMAT_EULER = 4\n\
+                    MTI_OPFORMAT_MAT   = 8\n");
+            return rmp400_mti_error(self);
+            break;
+        case (int)MTI_OPFORMAT_QUAT:
+            break;
+        case (int)MTI_OPFORMAT_EULER:
+            break;
+        case (int)MTI_OPFORMAT_MAT:
+            break;
+    }
+
+    // Config copied from MTIinitExec codel in robotpkg/localization/MTI
+    mtiConfig->outputMode           = (OutputMode)params->outputMode;
+    mtiConfig->outputFormat         = (OutputFormat)params->outputFormat;
+    mtiConfig->syncOutMode          = MTI_SYNCOUTMODE_DISABLED;
+    mtiConfig->syncOutPulsePolarity = MTI_SYNCOUTPULSE_POS;
+    mtiConfig->syncOutSkipFactor    = 0;
+    mtiConfig->syncOutOffset        = 0;
+    mtiConfig->syncOutPulseWidth    = 29498; //1ms pulse
+
+    //// Same config as mtiTest
+    //mtiHandleP = new MTI(params->port,
+    //    (OutputMode)mtiConfig->outputMode,
+    //    (OutputFormat)mtiConfig->outputFormat,
+    //    MTI_SYNCOUTMODE_DISABLED);
+        
+    
+    mtiHandleP = new MTI(params->port,
+        (OutputMode)mtiConfig->outputMode,
+        (OutputFormat)mtiConfig->outputFormat);
+    if(!mtiHandleP)
+        return rmp400_mti_error(self);
+
+    if(!mtiHandleP->set_syncOut((SyncOutMode)mtiConfig->syncOutMode,
+        (SyncOutPulsePolarity)mtiConfig->syncOutPulsePolarity,
+        mtiConfig->syncOutSkipFactor,
+        mtiConfig->syncOutOffset,
+        mtiConfig->syncOutPulseWidth))
+    {
+        printf("Error MTI open : set_SyncOut failed\n");
+        delete mtiHandleP;
+        return rmp400_mti_error(self);
+    }
+    
+    *mtiHandle = (MTI_DATA*)mtiHandleP;
+    mti->currentMode = params->mode;
 
     return rmp400_ether;
 }

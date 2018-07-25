@@ -30,7 +30,7 @@ component rmp400 {
   version "0.1.99";
   email "openrobots@laas.fr";
   lang "c";
-  codels-require "rmp-libs >= 0.4.99, gyro-libs, felib";
+  codels-require "rmp-libs >= 0.4.99, gyro-libs, felib, MTI-clients";
 
   exception already_initialized;
   exception not_connected;
@@ -40,6 +40,7 @@ component rmp400 {
   exception rmplib_error;
   exception joystick_error;
   exception gyro_error;
+  exception mti_error;
   exception motors_off;
   exception emergency_stop;
   exception power_cord_connected;
@@ -71,6 +72,9 @@ component rmp400 {
     GYRO_DATA gyroId;
     gyro gyro;
     gyro_asserv gyro_asserv;
+    MTI_DATA mtiHandle;
+    mti mti;
+    mti_config mtiConfig;
     max_accel max_accel;
     log_str log;
   };
@@ -100,6 +104,8 @@ component rmp400 {
 			    out rs_mode,
 			    out gyro,
 			    out gyro_asserv,
+                out mtiHandle,
+                out mti,
 			    out Pose,
 			    out Status,
 			    out StatusGeneric) yield ether, pause::odo, end;
@@ -192,6 +198,18 @@ component rmp400 {
 				inout gyroId) yield ether;
     throw gyro_error;
     interrupts GyroBiasUpdate;
+  };
+
+  /*----------------------------------------------------------------------*/
+
+  activity InitMTI(in mti_params params) {
+    doc "Init and configure MTI sensor";
+    task MotionTask;
+    codel <start>rmp400MTIopen(in params,
+				inout mtiHandle,
+                inout mti,
+                inout mtiConfig) yield ether;
+    throw mti_error;
   };
 
   /*----------------------------------------------------------------------*/

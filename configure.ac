@@ -20,7 +20,7 @@ PKG_CHECK_MODULES(requires, [
   genom3 >= 2.99.4
   gyro-libs >= 3.0.99.0
   openrobots-idl >= 1.1
-  rmp-libs >= 0.4.99, gyro-libs, felib
+  rmp-libs >= 0.4.99, gyro-libs, felib, MTI-clients
 ])
 
 AC_SEARCH_LIBS([clock_gettime], [rt])
