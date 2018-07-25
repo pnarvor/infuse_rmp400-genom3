@@ -199,6 +199,33 @@ initOdoAndAsserv(rmp400_ids *ids,
 	max_accel->prev_vel_command = 0.;
 	max_accel->prev_vel_command_t = -1.;
 
+    /* MTI */
+    ids->mtiHandle = NULL;
+
+    ids->mti.mtiOn = false; 
+    ids->mti.currentMode = rmp440_mti_off;
+    ids->mti.data.acc[0] = 0.0;
+    ids->mti.data.acc[1] = 0.0;
+    ids->mti.data.acc[2] = 0.0;
+
+    ids->mti.data.gyr[0] = 0.0;
+    ids->mti.data.gyr[1] = 0.0;
+    ids->mti.data.gyr[2] = 0.0;
+
+    ids->mti.data.mag[0] = 0.0;
+    ids->mti.data.mag[1] = 0.0;
+    ids->mti.data.mag[2] = 0.0;
+
+    ids->mti.data.euler[0] = 0.0;
+    ids->mti.data.euler[1] = 0.0;
+    ids->mti.data.euler[2] = 0.0;
+
+    ids->mti.data.count = 0;
+    
+    ids->mti.data.timeStampRaw       = 0.0;
+    ids->mti.data.timeStampUndelayed = 0.0;
+    ids->mti.data.timeStampFiltered  = 0.0;
+
 	return rmp400_odo;
 }
 
