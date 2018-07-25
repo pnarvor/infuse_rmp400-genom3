@@ -205,6 +205,11 @@ module rmp400 {
     mti_inertial_data data;
   };
 
+  enum odometry_mode {
+    odometry_2d,
+    odometry_3d
+  };
+
   /* Acceleration limitation code */
   struct max_accel {
     double prev_vel_command;

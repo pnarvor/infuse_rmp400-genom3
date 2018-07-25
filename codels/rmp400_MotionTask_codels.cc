@@ -51,6 +51,7 @@ extern "C" {
 #include "codels.h"
 #include "rmp400_Log.h"
 #include "rmp400Const.h"
+#include "odo3d.h"
 
 /* --- Task MotionTask -------------------------------------------------- */
 
@@ -132,6 +133,22 @@ yawToQuaternion(double yaw, or_t3d_pos *pos)
 	pos->qz = sin(yaw * 0.5);
 }
 
+static void
+eulerToQuaternion(double roll, double pitch, double yaw, or_t3d_pos *pos)
+{
+    double cy = cos(yaw * 0.5);
+	double sy = sin(yaw * 0.5);
+	double cr = cos(roll * 0.5);
+	double sr = sin(roll * 0.5);
+	double cp = cos(pitch * 0.5);
+	double sp = sin(pitch * 0.5);
+
+	pos->qw = cy * cr * cp + sy * sr * sp;
+	pos->qx = cy * sr * cp - sy * cr * sp;
+	pos->qy = cy * cr * sp + sy * sr * cp;
+	pos->qz = sy * cr * cp - cy * sr * sp;
+}
+
 /*----------------------------------------------------------------------*/
 
 /** Codel initOdoAndAsserv of task MotionTask.
@@ -148,6 +165,7 @@ initOdoAndAsserv(rmp400_ids *ids,
 	rmp_status_str *statusgen = StatusGeneric->data(self);
 	rmp400_kinematics_str *kinematics = &ids->kinematics;
 	or_genpos_cart_state *robot = &ids->robot;
+	or_genpos_cart_3dstate *robot3d = &ids->robot3d;
 	or_genpos_cart_speed *ref = &ids->ref;
 	rmp400_gyro *gyro = &ids->gyro;
 	rmp400_gyro_asserv *gyro_asserv = &ids->gyro_asserv;
@@ -203,7 +221,7 @@ initOdoAndAsserv(rmp400_ids *ids,
     ids->mtiHandle = NULL;
 
     ids->mti.mtiOn = false; 
-    ids->mti.currentMode = rmp440_mti_off;
+    ids->mti.currentMode = rmp400_mti_off;
     ids->mti.data.acc[0] = 0.0;
     ids->mti.data.acc[1] = 0.0;
     ids->mti.data.acc[2] = 0.0;
@@ -225,6 +243,21 @@ initOdoAndAsserv(rmp400_ids *ids,
     ids->mti.data.timeStampRaw       = 0.0;
     ids->mti.data.timeStampUndelayed = 0.0;
     ids->mti.data.timeStampFiltered  = 0.0;
+
+    ids->odoMode = rmp400_odometry_2d;
+
+	robot3d->xRef  = 0.;
+	robot3d->yRef  = 0.;
+	robot3d->zRef  = 0.;
+	robot3d->xRob  = 0.;
+	robot3d->yRob  = 0.;
+	robot3d->zRob  = 0.;
+	robot3d->roll  = 0.;
+	robot3d->pitch = 0.;
+	robot3d->theta = 0.;
+	robot3d->v     = 0.;
+	robot3d->vt    = 0.;
+	robot3d->w     = 0.;
 
 	return rmp400_odo;
 }
@@ -249,7 +282,8 @@ odoAndAsserv(RMP_DEV_TAB **rmp, FE_STR **fe,
              rmp400_max_accel *max_accel, rmp400_data_str rs_data[2],
              rmp400_mode *rs_mode, rmp400_gyro *gyro,
              rmp400_gyro_asserv *gyro_asserv, MTI_DATA **mtiHandle,
-             rmp400_mti *mti, const rmp400_Pose *Pose,
+             rmp400_mti *mti, rmp400_odometry_mode *odoMode,
+             or_genpos_cart_3dstate *robot3d, const rmp400_Pose *Pose,
              const rmp400_Status *Status,
              const rmp400_StatusGeneric *StatusGeneric,
              const genom_context self)
@@ -286,16 +320,79 @@ odoAndAsserv(RMP_DEV_TAB **rmp, FE_STR **fe,
 	odoProba(robot, var,
 	    kinematics->axisWidth, var_params->coeffLinAng,
 	    rmp400_sec_period);	/* XXX could use the actual measured period */
-
 	gyroUpdate(gyroId, gyro, gyro_asserv, robot);
+
+    ////////////////////////////////////////////////////////////////////////
+ 
+    if(*odoMode == rmp400_odometry_3d)
+    {
+        double measuredPeriod = -1.0;
+        struct timeval tvLast, tvNew;
+        if(measuredPeriod < 0)
+        {
+            gettimeofday(&tvLast, NULL);
+            tvNew = tvLast;
+            measuredPeriod = 0.0;
+        }
+        else
+        {
+            gettimeofday(&tvNew, NULL);
+            measuredPeriod = (double)tvNew.tv_sec - (double)tvLast.tv_sec
+                + 1.0e-6*((double)tvNew.tv_sec - (double)tvLast.tv_sec);
+            tvLast = tvNew;
+        }
+
+        if(rmp400odo3d(mtiHandle, mti, robot, robot3d, odoMode, rmp400_sec_period))
+        {
+            printf("acc  : %2.2f %2.2f %2.2f\ngyr  : %2.2f %2.2f %2.2f\nmag  : %2.2f %2.2f %2.2f\neuler: %2.2f %2.2f %2.2f\nperiod: %2.2lf\n\n",
+                mti->data.acc[0], 
+                mti->data.acc[1], 
+                mti->data.acc[2], 
+                mti->data.gyr[0], 
+                mti->data.gyr[1], 
+                mti->data.gyr[2], 
+                mti->data.mag[0], 
+                mti->data.mag[1], 
+                mti->data.mag[2],
+                mti->data.euler[0], 
+                mti->data.euler[1], 
+                mti->data.euler[2],
+                rmp400_sec_period);
+            //fflush(stdout);
+            printf("euler rpy: %2.2f %2.2f %2.2f\nperiods : %2.2lf %2.2lf\n\n",
+                robot3d->roll, 
+                robot3d->pitch, 
+                robot3d->theta,
+                rmp400_sec_period,
+                measuredPeriod);
+            fflush(stdout);
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////
 
 	/* fill pose */
 	pose->intrinsic = true;
 	pose->pos._present = true;
-	pose->pos._value.x = robot->xRob;
-	pose->pos._value.y = robot->yRob;
-	pose->pos._value.z = 0.0;	/* XXX */
-	yawToQuaternion(robot->theta, &pose->pos._value); /* XXX */
+
+    if(*odoMode != rmp400_odometry_3d)
+    {
+	    pose->pos._value.x = robot->xRob;
+	    pose->pos._value.y = robot->yRob;
+	    pose->pos._value.z = 0.0; 	/* XXX */
+	    yawToQuaternion(robot->theta, &pose->pos._value); /* XXX */
+    }
+    else
+    {
+	    pose->pos._value.x = robot3d->xRob;
+	    pose->pos._value.y = robot3d->yRob;
+	    pose->pos._value.z = robot3d->zRob;
+	    eulerToQuaternion(robot3d->roll,
+                            robot3d->pitch,
+                            robot3d->theta,
+                            &pose->pos._value);
+    }
+	
 	pose->vel._present = true;
 	pose->vel._value.vx = robot->v;
 	pose->vel._value.vy = 0;
@@ -614,14 +711,14 @@ rmp400GyroExec(const rmp400_gyro_params *params,
 
 /* --- Activity GyroBiasUpdate ------------------------------------------ */
 
-/** Codel rmp440GyroBiasUpdate of activity GyroBiasUpdate.
+/** Codel rmp400GyroBiasUpdate of activity GyroBiasUpdate.
  *
  * Triggered by rmp400_start.
  * Yields to rmp400_ether.
  * Throws rmp400_emergency_stop, rmp400_gyro_error.
  */
 genom_event
-rmp440GyroBiasUpdate(int32_t nbMeasures,
+rmp400GyroBiasUpdate(int32_t nbMeasures,
                      const or_genpos_cart_state *robot,
                      rmp400_gyro *gyro, GYRO_DATA **gyroId,
                      const genom_context self)
@@ -726,5 +823,44 @@ rmp400MTIopen(const rmp400_mti_params *params, MTI_DATA **mtiHandle,
     *mtiHandle = (MTI_DATA*)mtiHandleP;
     mti->currentMode = params->mode;
 
+    return rmp400_ether;
+}
+
+
+/* --- Activity ToggleOdometryMode -------------------------------------- */
+
+/** Codel rmp400ToggleOdoMode of activity ToggleOdometryMode.
+ *
+ * Triggered by rmp400_start.
+ * Yields to rmp400_ether.
+ * Throws rmp400_emergency_stop, rmp400_odo3d_error.
+ */
+genom_event
+rmp400ToggleOdoMode(MTI_DATA **mtiHandle, rmp400_mti *mti,
+                    rmp400_odometry_mode *odoMode,
+                    const genom_context self)
+{
+    MTI* mtiHandleP;
+    if(*odoMode == rmp400_odometry_2d)
+    {
+        if(!mtiHandle)
+            return rmp400_odo3d_error(self);
+        mtiHandleP = (MTI*)*mtiHandle;
+        if(!mtiHandleP)
+        {
+            printf("Error toggleOdoMode, did you initialize the mti ?\n");
+            return rmp400_odo3d_error(self);
+        }
+        // read once to check if ok
+        if(!mtiHandleP->read((INERTIAL_DATA*)(&mti->data),false))
+            return rmp400_odo3d_error(self);
+
+        *odoMode = rmp400_odometry_3d;
+    }
+    else
+    {
+        //carefull with reinit...
+        *odoMode = rmp400_odometry_2d;
+    }
     return rmp400_ether;
 }

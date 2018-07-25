@@ -414,6 +414,27 @@ Init and configure MTI sensor
 
 '''
 
+[[ToggleOdometryMode]]
+=== ToggleOdometryMode (activity)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Throws
+[disc]
+ * `exception ::rmp400::emergency_stop`
+
+ * `exception ::rmp400::odo3d_error`
+
+a|.Context
+[disc]
+  * In task `<<MotionTask>>`
+  (frequency 20.0 _Hz_)
+|===
+
+Enable or disable odometry mode
+
+'''
+
 [[log]]
 === log (function)
 

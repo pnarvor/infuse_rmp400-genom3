@@ -9,6 +9,7 @@ librmp400_codels_la_SOURCES+=	codels.h joystick.cc motion_helpers.cc \
 				odoProba.cc odoProba.h orMathLib.h
 
 librmp400_codels_la_SOURCES+=	rmp400_Log.h rmp400_Log.cc
+librmp400_codels_la_SOURCES+=	odo3d.cc odo3d.h
 
 librmp400_codels_la_CPPFLAGS=	-Wall $(requires_CFLAGS)
 librmp400_codels_la_LDFLAGS=	$(requires_LIBS)
