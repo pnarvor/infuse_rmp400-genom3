@@ -385,7 +385,7 @@ rmp400InitStart(RMP_DEV_TAB **rmp, FE_STR **fe,
 	pthread_t tid;
 	int i, n;
 
-	*rmp = malloc(sizeof(struct RMP_DEV_TAB));
+	*rmp = (RMP_DEV_TAB*)malloc(sizeof(struct RMP_DEV_TAB));
 	if (*rmp == NULL)
 		return rmp400_malloc_error(self);
 
