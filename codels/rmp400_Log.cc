@@ -21,8 +21,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+extern "C" {
 #include <rmp/rmpLib.h>
 #include <fe/ftdi-emergency.h>
+}
 
 #include "acrmp400.h"
 

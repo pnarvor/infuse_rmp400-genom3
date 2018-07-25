@@ -34,9 +34,11 @@
 #include <string.h>
 #include <time.h>
 
+extern "C" {
 #include <rmp/rmpLib.h>
 #include <fe/ftdi-emergency.h>
 #include <gyroLib/gyro.h>
+}
 
 #include "acrmp400.h"
 
