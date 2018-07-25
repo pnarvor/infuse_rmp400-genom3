@@ -183,6 +183,17 @@ component rmp400 {
     interrupts Gyro;
   };
 
+  activity GyroBiasUpdate(in long nbMeasures) {
+    doc "Gyro bias estimation";
+    task MotionTask;
+    codel <start>rmp440GyroBiasUpdate(in nbMeasures,
+				in robot,
+				inout gyro,
+				inout gyroId) yield ether;
+    throw gyro_error;
+    interrupts GyroBiasUpdate;
+  };
+
   /*----------------------------------------------------------------------*/
   /* Log */
   function log(in string<64> path = "/tmp/rmp400.log": "Log file name") {

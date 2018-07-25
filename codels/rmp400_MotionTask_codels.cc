@@ -580,3 +580,30 @@ rmp400GyroExec(const rmp400_gyro_params *params,
 	gyro->currentMode = params->mode;
 	return rmp400_ether;
 }
+
+
+/* --- Activity GyroBiasUpdate ------------------------------------------ */
+
+/** Codel rmp440GyroBiasUpdate of activity GyroBiasUpdate.
+ *
+ * Triggered by rmp400_start.
+ * Yields to rmp400_ether.
+ * Throws rmp400_emergency_stop, rmp400_gyro_error.
+ */
+genom_event
+rmp440GyroBiasUpdate(int32_t nbMeasures,
+                     const or_genpos_cart_state *robot,
+                     rmp400_gyro *gyro, GYRO_DATA **gyroId,
+                     const genom_context self)
+{
+    if(gyro->currentMode == rmp400_gyro_off || *gyroId == NULL)
+    {
+        printf("Error gyroBiasEstimate : gyro must be initialized\n");
+        return rmp400_gyro_error(self);
+    }
+
+	if (gyroUpdateWOffset(*gyroId, nbMeasures) != 0)
+        return rmp400_gyro_error(self);
+
+    return rmp400_ether;
+}

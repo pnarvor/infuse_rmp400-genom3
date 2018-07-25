@@ -359,6 +359,32 @@ Gyro configuration
 
 '''
 
+[[GyroBiasUpdate]]
+=== GyroBiasUpdate (activity)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Inputs
+[disc]
+ * `long` `nbMeasures`
+
+a|.Throws
+[disc]
+ * `exception ::rmp400::emergency_stop`
+
+ * `exception ::rmp400::gyro_error`
+
+a|.Context
+[disc]
+  * In task `<<MotionTask>>`
+  (frequency 20.0 _Hz_)
+  * Interrupts `<<GyroBiasUpdate>>`
+|===
+
+Gyro bias estimation
+
+'''
+
 [[log]]
 === log (function)
 
