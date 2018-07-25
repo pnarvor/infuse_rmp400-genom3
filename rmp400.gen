@@ -58,6 +58,7 @@ component rmp400 {
   port out status_str Status;
   port out rmp::status_str StatusGeneric;
 
+  port in asn1::bitstream cmd_vel_Infuse;
   port out asn1::bitstream PoseInfuse;
 
   /*----------------------------------------------------------------------*/
@@ -85,6 +86,7 @@ component rmp400 {
     or::genpos::cart_3dstate robot3d;
     max_accel max_accel;
     log_str log;
+    octet infuseTrackMode;
   };
 
   attribute set_var_params(in var_params);
@@ -96,6 +98,7 @@ component rmp400 {
     period sec_period s;
     stack 65536;
     codel <start>initOdoAndAsserv(out ::ids, out PoseInfuse,
+                out infuseTrackMode,
                 out StatusGeneric) 
       yield ether, odo;
     codel <odo>odoAndAsserv(inout rmp,
@@ -168,10 +171,14 @@ component rmp400 {
     doc  "Start tracking a reference port";
     validate trackControl(inout rmp, in rs_data);
     codel <start>trackStart(inout rs_mode,
-			    port in cmd_vel) yield track_main, end;
+			    port in cmd_vel,
+                port in cmd_vel_Infuse,
+                in infuseTrackMode) yield track_main, end;
     codel <track_main>pumpReference(in robot,
 			      in rs_mode,
 			      port in cmd_vel,
+                  port in cmd_vel_Infuse,
+                  in infuseTrackMode,
 			      out ref) yield pause::track_main, end;
     codel <end>smoothStopTrack(in robot,
 			       in dynamics,
@@ -181,6 +188,11 @@ component rmp400 {
     throw not_connected, port_not_found, bad_ref, cmd_stop_track,
       motors_off, emergency_stop, power_cord_connected;
     interrupts JoystickOn, Track;
+  };
+  
+  function toggleInfuseTrackMode() {
+      doc "Overrides cmd_vel with cmd_vel_Infuse";
+      codel toggleInfuseTrackMode(in rs_mode, out infuseTrackMode);
   };
 
   function Stop() {

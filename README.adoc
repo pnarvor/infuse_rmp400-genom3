@@ -183,6 +183,29 @@ a|.Data structure
 
 '''
 
+[[cmd_vel_Infuse]]
+=== cmd_vel_Infuse (in)
+
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Data structure
+[disc]
+ * `struct ::asn1::bitstream` `cmd_vel_Infuse`
+ ** `struct ::asn1::header` `header`
+ *** `unsigned long` `seq`
+ *** `struct ::or::time::ts` `stamp`
+ **** `unsigned long` `sec`
+ **** `unsigned long` `nsec`
+ *** `string` `frame_id`
+ ** `string` `type`
+ ** `octet` `serialization_method`
+ ** `sequence< octet >` `data`
+
+|===
+
+'''
+
 [[PoseInfuse]]
 === PoseInfuse (out)
 
@@ -329,11 +352,20 @@ a|.Context
   * In task `<<TrackTask>>`
   (frequency 20.0 _Hz_)
   * Reads port `<<cmd_vel>>`
+  * Reads port `<<cmd_vel_Infuse>>`
   * Interrupts `<<JoystickOn>>`
   * Interrupts `<<Track>>`
 |===
 
 Start tracking a reference port
+
+'''
+
+[[toggleInfuseTrackMode]]
+=== toggleInfuseTrackMode (function)
+
+
+Overrides cmd_vel with cmd_vel_Infuse
 
 '''
 
