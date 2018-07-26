@@ -255,7 +255,7 @@ initOdoAndAsserv(rmp400_ids *ids, const rmp400_PoseInfuse *PoseInfuse,
 
 
     /* MTI */
-    ids->mtiHandle = NULL;
+    //ids->mtiHandle = NULL;
 
     ids->mti.mtiOn = false; 
     ids->mti.currentMode = rmp400_mti_off;
@@ -496,6 +496,13 @@ odoAndAsserv(RMP_DEV_TAB **rmp, FE_STR **fe,
 		rmp400LogData(log, pose, gyro, gyro_asserv, &cmd, rs_data);
 
 publish:
+
+    if(*odoMode == rmp400_odometry_3d)
+    {
+        if(!readMTI(mtiHandle, &mti->data))
+            cout << "Could not read MTI" << endl;
+    }
+
 	/* Publish */
 	Pose->write(self);
 
@@ -865,9 +872,10 @@ rmp400MTIopen(const rmp400_mti_params *params, MTI_DATA **mtiHandle,
               rmp400_mti *mti, rmp400_mti_config *mtiConfig,
               const genom_context self)
 {
-    MTI* mtiHandleP = (MTI*)*mtiHandle;
     if(mtiHandle == NULL)
         return rmp400_mti_error(self);
+    *mtiHandle = NULL;
+    MTI* mtiHandleP = NULL;
 
     // Checking input parameters
     switch(params->outputMode)
@@ -917,6 +925,8 @@ rmp400MTIopen(const rmp400_mti_params *params, MTI_DATA **mtiHandle,
     //    (OutputMode)mtiConfig->outputMode,
     //    (OutputFormat)mtiConfig->outputFormat,
     //    MTI_SYNCOUTMODE_DISABLED);
+    //if(!mtiHandleP)
+    //    return rmp400_mti_error(self);
         
     
     mtiHandleP = new MTI(params->port,
