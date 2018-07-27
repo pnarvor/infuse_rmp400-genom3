@@ -54,6 +54,8 @@ extern "C" {
 #include "odo3d.h"
 
 ////////////////////////////////////////////////////////////////////////////////
+#include <iostream>
+using namespace std;
 #include <Pose_InFuse.h>
 #include <sys/time.h>
 ////////////////////////////////////////////////////////////////////////////////
@@ -255,7 +257,7 @@ initOdoAndAsserv(rmp400_ids *ids, const rmp400_PoseInfuse *PoseInfuse,
 
 
     /* MTI */
-    //ids->mtiHandle = NULL;
+    ids->mtiHandle = NULL;
 
     ids->mti.mtiOn = false; 
     ids->mti.currentMode = rmp400_mti_off;
@@ -364,22 +366,6 @@ odoAndAsserv(RMP_DEV_TAB **rmp, FE_STR **fe,
  
     if(*odoMode == rmp400_odometry_3d)
     {
-        double measuredPeriod = -1.0;
-        struct timeval tvLast, tvNew;
-        if(measuredPeriod < 0)
-        {
-            gettimeofday(&tvLast, NULL);
-            tvNew = tvLast;
-            measuredPeriod = 0.0;
-        }
-        else
-        {
-            gettimeofday(&tvNew, NULL);
-            measuredPeriod = (double)tvNew.tv_sec - (double)tvLast.tv_sec
-                + 1.0e-6*((double)tvNew.tv_sec - (double)tvLast.tv_sec);
-            tvLast = tvNew;
-        }
-
         if(rmp400odo3d(mtiHandle, mti, robot, robot3d, odoMode, rmp400_sec_period))
         {
             printf("acc  : %2.2f %2.2f %2.2f\ngyr  : %2.2f %2.2f %2.2f\nmag  : %2.2f %2.2f %2.2f\neuler: %2.2f %2.2f %2.2f\nperiod: %2.2lf\n\n",
@@ -397,12 +383,11 @@ odoAndAsserv(RMP_DEV_TAB **rmp, FE_STR **fe,
                 mti->data.euler[2],
                 rmp400_sec_period);
             //fflush(stdout);
-            printf("euler rpy: %2.2f %2.2f %2.2f\nperiods : %2.2lf %2.2lf\n\n",
+            printf("euler rpy: %2.2f %2.2f %2.2f\nperiods : %2.2lf\n\n",
                 robot3d->roll, 
                 robot3d->pitch, 
                 robot3d->theta,
-                rmp400_sec_period,
-                measuredPeriod);
+                rmp400_sec_period);
             fflush(stdout);
         }
     }
@@ -935,16 +920,16 @@ rmp400MTIopen(const rmp400_mti_params *params, MTI_DATA **mtiHandle,
     if(!mtiHandleP)
         return rmp400_mti_error(self);
 
-    if(!mtiHandleP->set_syncOut((SyncOutMode)mtiConfig->syncOutMode,
-        (SyncOutPulsePolarity)mtiConfig->syncOutPulsePolarity,
-        mtiConfig->syncOutSkipFactor,
-        mtiConfig->syncOutOffset,
-        mtiConfig->syncOutPulseWidth))
-    {
-        printf("Error MTI open : set_SyncOut failed\n");
-        delete mtiHandleP;
-        return rmp400_mti_error(self);
-    }
+    //if(!mtiHandleP->set_syncOut((SyncOutMode)mtiConfig->syncOutMode,
+    //    (SyncOutPulsePolarity)mtiConfig->syncOutPulsePolarity,
+    //    mtiConfig->syncOutSkipFactor,
+    //    mtiConfig->syncOutOffset,
+    //    mtiConfig->syncOutPulseWidth))
+    //{
+    //    printf("Error MTI open : set_SyncOut failed\n");
+    //    delete mtiHandleP;
+    //    return rmp400_mti_error(self);
+    //}
     
     *mtiHandle = (MTI_DATA*)mtiHandleP;
     mti->currentMode = params->mode;

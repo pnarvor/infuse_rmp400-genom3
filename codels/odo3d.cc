@@ -33,8 +33,8 @@ bool readMTI(MTI_DATA** mtiHandle, rmp400_mti_inertial_data* data)
     if(!mtiHandleP)
         return false;
 
-    //return mtiHandleP->read((INERTIAL_DATA*)data, false);
-    return mtiHandleP->read((INERTIAL_DATA*)data, true);
+    return mtiHandleP->read((INERTIAL_DATA*)data, false);
+    //return mtiHandleP->read((INERTIAL_DATA*)data, true);
 }
 
 
@@ -43,11 +43,6 @@ bool rmp400odo3d(MTI_DATA** mtiHandle, rmp400_mti* mti,
     or_genpos_cart_state* robot, or_genpos_cart_3dstate* robot3d,
     rmp400_odometry_mode* odoMode, double period)
 {
-	PomEuler* attitude = (PomEuler*)&mti->data.euler;
-    //attitude->roll  = DEG_TO_RAD(attitude->roll);
-    //attitude->pitch = DEG_TO_RAD(attitude->pitch);
-    //attitude->yaw   = DEG_TO_RAD(attitude->yaw);
-
 	int i;
 	static double mpitch = 0.0, oldPitch = -1.0;
 	static int pausePitch = 0;
@@ -59,6 +54,7 @@ bool rmp400odo3d(MTI_DATA** mtiHandle, rmp400_mti* mti,
 	static double history_vel[RMP400_ZODOCOR_AVGVELSIZE] = {0.};
 	static int history_vel_i = 0;
 	double vel, accel;
+	PomEuler attitude;
 
 	/* 3D odometry */
 	if (*odoMode == rmp400_odometry_3d) {
@@ -67,8 +63,12 @@ bool rmp400odo3d(MTI_DATA** mtiHandle, rmp400_mti* mti,
             *odoMode = rmp400_odometry_2d;
 		} else
 		{
+            attitude.roll  = DEG_TO_RAD(mti->data.euler[0]);
+            attitude.pitch = DEG_TO_RAD(mti->data.euler[1]);
+            attitude.yaw   = DEG_TO_RAD(mti->data.euler[2]);
+
 			/* pause pitch updates if acceleration is too large */
-			history_pitch[history_pitch_i++] = attitude->pitch;
+			history_pitch[history_pitch_i++] = attitude.pitch;
 			if (history_pitch_i >= 2*RMP400_ZODOCOR_AVGPITCHSIZE) history_pitch_i = 0;
 			history_vel[history_vel_i++] = robot->v;
 			if (history_vel_i >= RMP400_ZODOCOR_AVGVELSIZE) history_vel_i = 0;
@@ -107,21 +107,19 @@ bool rmp400odo3d(MTI_DATA** mtiHandle, rmp400_mti* mti,
 						pausePitch = 0;
 				}
 				if (!pausePitch)
-					odoPitch = attitude->pitch;
+					odoPitch = attitude.pitch;
 			}
 		}
 	}
 	if (*odoMode == rmp400_odometry_2d) {
 		mpitch = 0;
 		oldPitch = -1;
-        attitude->roll  = 0.0;
-        attitude->pitch = 0.0;
-        attitude->yaw   = 0.0;
+        attitude.roll  = 0.0;
+        attitude.pitch = 0.0;
+        attitude.yaw   = 0.0;
 	}           
-	//robot3d->pitch = attitude->pitch;
-	//robot3d->roll = attitude->roll;
-	robot3d->pitch = DEG_TO_RAD(attitude->pitch);
-	robot3d->roll =  DEG_TO_RAD(attitude->roll);
+	robot3d->pitch = attitude.pitch;
+	robot3d->roll = attitude.roll;
 	/* XXXX For now keep the position in the Z=0 frame */
 	robot3d->theta  = robot->theta;
 	robot3d->xRob = robot->xRob;
