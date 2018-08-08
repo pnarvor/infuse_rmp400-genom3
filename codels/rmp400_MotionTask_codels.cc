@@ -511,6 +511,8 @@ publish:
     long long timeNow = tv.tv_sec*1000000 + tv.tv_usec;
     
     asn1SccTransformWithCovariance asnPose;
+    asn1SccTransformWithCovariance_Initialize(&asnPose);
+
     asnPose.metadata.msgVersion = transformWithCovariance_version;
 
     //strcpy(asnPose.parentFrameId.arr, "LocalTerrainFrame");
