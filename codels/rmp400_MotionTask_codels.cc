@@ -568,7 +568,7 @@ publish:
     res = asn1SccTransformWithCovariance_Encode(&asnPose, &bstream, &errorCode, TRUE);
     if(!res)
     {
-        printf("error, Pose_Infuse encoding error : %d\n", errorCode);
+        printf("error,  asn1SccTransformWithCovariance encoding error : %d\n", errorCode);
 	    return rmp400_pause_odo;
     }
     //Set encoded size in bistream
