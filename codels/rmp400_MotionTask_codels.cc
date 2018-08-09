@@ -515,6 +515,9 @@ publish:
 
     asnPose.metadata.msgVersion = transformWithCovariance_version;
 
+    sprintf((char*)asnPose.metadata.producerId.arr, "rmp400");
+    asnPose.metadata.producerId.nCount = strlen((char*)asnPose.metadata.producerId.arr) + 1;
+
     //strcpy(asnPose.parentFrameId.arr, "LocalTerrainFrame");
     sprintf((char*)asnPose.metadata.parentFrameId.arr, "LocalTerrainFrame");
     asnPose.metadata.parentFrameId.nCount = strlen((char*)asnPose.metadata.parentFrameId.arr) + 1;
