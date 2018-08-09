@@ -233,7 +233,7 @@ initOdoAndAsserv(rmp400_ids *ids, const rmp400_PoseInfuse *PoseInfuse,
         printf("Error getting port bstream at initialization !\n");
 		return rmp400_pause_init_main;
     }
-    
+
     // Init bitstream header
     struct timeval tv;
     gettimeofday(&tv,NULL);
@@ -243,12 +243,12 @@ initOdoAndAsserv(rmp400_ids *ids, const rmp400_PoseInfuse *PoseInfuse,
     gbstream->header.stamp.nsec = (timeNow % 1000000) * 1000;
     gbstream->header.frame_id = (char*)malloc(sizeof(char)*(1 + strlen("RoverBodyFrame")));
     sprintf(gbstream->header.frame_id, "RoverBodyFrame");
-   
+
     //// Init bistream type
     gbstream->type = (char*)malloc(sizeof(char)*(1 + strlen("TransformWithCovariance")));
     sprintf(gbstream->type, "TransformWithCovariance");
     gbstream->serialization_method = 0; //uPER
-    //reserve memory for serialized data 
+    //reserve memory for serialized data
     genom_sequence_reserve(&(gbstream->data), asn1SccTransformWithCovariance_REQUIRED_BYTES_FOR_ENCODING);
     gbstream->data._length = 0;
 
@@ -259,7 +259,7 @@ initOdoAndAsserv(rmp400_ids *ids, const rmp400_PoseInfuse *PoseInfuse,
     /* MTI */
     ids->mtiHandle = NULL;
 
-    ids->mti.mtiOn = false; 
+    ids->mti.mtiOn = false;
     ids->mti.currentMode = rmp400_mti_off;
     ids->mti.data.acc[0] = 0.0;
     ids->mti.data.acc[1] = 0.0;
@@ -278,7 +278,7 @@ initOdoAndAsserv(rmp400_ids *ids, const rmp400_PoseInfuse *PoseInfuse,
     ids->mti.data.euler[2] = 0.0;
 
     ids->mti.data.count = 0;
-    
+
     ids->mti.data.timeStampRaw       = 0.0;
     ids->mti.data.timeStampUndelayed = 0.0;
     ids->mti.data.timeStampFiltered  = 0.0;
@@ -348,7 +348,7 @@ odoAndAsserv(RMP_DEV_TAB **rmp, FE_STR **fe,
 		r = (*rmp)->dev;
 	else
 		goto publish;
-	
+
 	if (r[0] == NULL || r[1] == NULL)
 		goto publish; /* not initialized yet */
 
@@ -363,29 +363,29 @@ odoAndAsserv(RMP_DEV_TAB **rmp, FE_STR **fe,
 	gyroUpdate(gyroId, gyro, gyro_asserv, robot);
 
     ////////////////////////////////////////////////////////////////////////
- 
+
     if(*odoMode == rmp400_odometry_3d)
     {
         if(rmp400odo3d(mtiHandle, mti, robot, robot3d, odoMode, rmp400_sec_period))
         {
             printf("acc  : %2.2f %2.2f %2.2f\ngyr  : %2.2f %2.2f %2.2f\nmag  : %2.2f %2.2f %2.2f\neuler: %2.2f %2.2f %2.2f\nperiod: %2.2lf\n\n",
-                mti->data.acc[0], 
-                mti->data.acc[1], 
-                mti->data.acc[2], 
-                mti->data.gyr[0], 
-                mti->data.gyr[1], 
-                mti->data.gyr[2], 
-                mti->data.mag[0], 
-                mti->data.mag[1], 
+                mti->data.acc[0],
+                mti->data.acc[1],
+                mti->data.acc[2],
+                mti->data.gyr[0],
+                mti->data.gyr[1],
+                mti->data.gyr[2],
+                mti->data.mag[0],
+                mti->data.mag[1],
                 mti->data.mag[2],
-                mti->data.euler[0], 
-                mti->data.euler[1], 
+                mti->data.euler[0],
+                mti->data.euler[1],
                 mti->data.euler[2],
                 rmp400_sec_period);
             //fflush(stdout);
             printf("euler rpy: %2.2f %2.2f %2.2f\nperiods : %2.2lf\n\n",
-                robot3d->roll, 
-                robot3d->pitch, 
+                robot3d->roll,
+                robot3d->pitch,
                 robot3d->theta,
                 rmp400_sec_period);
             fflush(stdout);
@@ -415,7 +415,7 @@ odoAndAsserv(RMP_DEV_TAB **rmp, FE_STR **fe,
                             robot3d->theta,
                             &pose->pos._value);
     }
-	
+
 	pose->vel._present = true;
 	pose->vel._value.vx = robot->v;
 	pose->vel._value.vy = 0;
@@ -509,7 +509,7 @@ publish:
     struct timeval tv;
     gettimeofday(&tv,NULL);
     long long timeNow = tv.tv_sec*1000000 + tv.tv_usec;
-    
+
     asn1SccTransformWithCovariance asnPose;
     asn1SccTransformWithCovariance_Initialize(&asnPose);
 
@@ -529,7 +529,7 @@ publish:
     asnPose.metadata.childFrameId.nCount = strlen((char*)asnPose.metadata.childFrameId.arr) + 1;
     asnPose.metadata.childTime.microseconds  = timeNow;
     asnPose.metadata.childTime.usecPerSec = 1000000;
-    
+
     asnPose.data.translation.arr[0] = pose->pos._value.x;
     asnPose.data.translation.arr[1] = pose->pos._value.y;
     asnPose.data.translation.arr[2] = pose->pos._value.z;
@@ -550,17 +550,17 @@ publish:
     // to have a well defined cov matrix :
     for(int i = 0; i < 6; i++)
         asnPose.data.cov.arr[i].arr[i] = 1e-6;
-    
+
     asn1_bitstream* gbstream = PoseInfuse->data(self);
     if(!gbstream || !pose)
         return rmp400_pause_odo;
     if(!gbstream->data._buffer)
         return rmp400_pause_odo;
-    
+
     gbstream->header.seq = gbstream->header.seq + 1;
     gbstream->header.stamp.sec = timeNow / 1000000;
     gbstream->header.stamp.nsec = (timeNow % 1000000) * 1000;
-    
+
 
     flag res;
     int errorCode;
@@ -913,8 +913,8 @@ rmp400MTIopen(const rmp400_mti_params *params, MTI_DATA **mtiHandle,
     //    MTI_SYNCOUTMODE_DISABLED);
     //if(!mtiHandleP)
     //    return rmp400_mti_error(self);
-        
-    
+
+
     mtiHandleP = new MTI(params->port,
         (OutputMode)mtiConfig->outputMode,
         (OutputFormat)mtiConfig->outputFormat);
@@ -931,7 +931,7 @@ rmp400MTIopen(const rmp400_mti_params *params, MTI_DATA **mtiHandle,
     //    delete mtiHandleP;
     //    return rmp400_mti_error(self);
     //}
-    
+
     *mtiHandle = (MTI_DATA*)mtiHandleP;
     mti->currentMode = params->mode;
 
