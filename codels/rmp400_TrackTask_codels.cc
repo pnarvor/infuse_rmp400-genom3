@@ -134,9 +134,9 @@ trackStart(rmp400_mode *rs_mode, const rmp400_cmd_vel *cmd_vel,
 	printf("-- %s\n", __func__);
     if(infuseTrackMode)
     {
-	    if (cmd_vel->read(self) != genom_ok)
+	    if (cmd_vel_Infuse->read(self) != genom_ok)
 	    	return rmp400_port_not_found(self);
-	    if (cmd_vel->data(self) == NULL)
+	    if (cmd_vel_Infuse->data(self) == NULL)
 	    	return rmp400_port_not_found(self);
 	    *rs_mode = rmp400_mode_track;
     }
