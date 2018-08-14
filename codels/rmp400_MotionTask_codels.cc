@@ -78,10 +78,6 @@ gyroUpdate(GYRO_DATA **gyroId, rmp400_gyro *gyro,
 			gyroEnd(*gyroId);
 			*gyroId = NULL;
 		}
-		else {
-		  gyro->gyroTheta = - gyro->gyroTheta;
-		  gyro->gyroOmega = - gyro->gyroOmega;
-		}
 	}
 	if (gyro->currentMode == rmp400_gyro_off ||
 	    (gyro->currentMode == rmp400_gyro_on_if_motion
@@ -807,8 +803,8 @@ rmp400GyroExec(const rmp400_gyro_params *params,
 		gyroEnd(*gyroId);
 		*gyroId = NULL;
 		return rmp400_gyro_error(self);
-	} else
-		gyro->gyroTheta = - gyro->gyroTheta;
+	}
+
 	/* reset gyro offset to match odo */
 	gyro->gyroToRobotOffset = robot->theta - gyro->gyroTheta;
 
