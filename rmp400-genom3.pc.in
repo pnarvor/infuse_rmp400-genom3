@@ -10,6 +10,6 @@ idldir=@datadir@/idl
 Name: rmp400-genom3
 Description: rmp400 interface and codels library
 Version: @PACKAGE_VERSION@
-Requires: gyro-libs >= 3.0.99.0, openrobots-idl >= 1.1, infuse-idl >= 0.1, rmp-libs >= 0.4.99, gyro-libs, felib, MTI-clients, infuse_asn1_types >= 0.1
+Requires: gyro-libs >= 3.0.99.0, openrobots-idl >= 1.1, infuse-idl >= 0.1.1, rmp-libs >= 0.4.99, gyro-libs, felib, MTI-clients, infuse_asn1_types >= 0.2
 Cflags: -I${includedir} -I${idldir}
 Libs: -L${libdir} -lrmp400_codels
