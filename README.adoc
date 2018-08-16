@@ -6,7 +6,7 @@
 
 = rmp400 component
 laas-infuse@laas.fr
-0.1.99
+0.2
 :toc: left
 
 // fix default asciidoctor stylesheet issue #2407 and add hr clear rule

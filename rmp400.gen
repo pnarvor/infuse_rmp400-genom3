@@ -30,7 +30,7 @@
 #include "infuse/asn1/bitstream.gen"
 
 component rmp400 {
-  version "0.1.99";
+  version "0.2";
   email "laas-infuse@laas.fr";
   lang "c";
   codels-require "rmp-libs >= 0.4.99, gyro-libs, felib, MTI-clients, infuse_asn1_types >= 0.2";
