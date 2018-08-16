@@ -5,7 +5,7 @@
 // rmp400.gen.
 
 = rmp400 component
-openrobots@laas.fr
+laas-infuse@laas.fr
 0.1.99
 :toc: left
 
