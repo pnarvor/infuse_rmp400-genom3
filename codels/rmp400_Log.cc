@@ -33,7 +33,6 @@ extern "C" {
 #include "codels.h"
 #include "rmp400_Log.h"
 
-#ifdef notyet
 int
 rmp400LogPose(const struct rmp400_log_str *log, const or_pose_estimator_state *pose)
 {
@@ -57,7 +56,6 @@ rmp400LogPose(const struct rmp400_log_str *log, const or_pose_estimator_state *p
 
 	return 0;
 }
-#endif
 
 
 int
