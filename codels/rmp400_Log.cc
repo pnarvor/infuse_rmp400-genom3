@@ -35,7 +35,7 @@ extern "C" {
 
 #ifdef notyet
 int
-rmp440LogPose(struct rmp440_log_str *log, const or_pose_estimator_state *pose)
+rmp400LogPose(const struct rmp400_log_str *log, const or_pose_estimator_state *pose)
 {
 
 	if (fprintf(log->out, "%lf\t"

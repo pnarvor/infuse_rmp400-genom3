@@ -48,6 +48,7 @@ typedef struct rmp400_log_str {
 	       "\tpowerbase_voltage2\tbattery_charge2" \
 	       "\tvelocity_command2[broken]\tturn_command2[broken]"
 
+extern int rmp400LogPose(const struct rmp400_log_str *log, const or_pose_estimator_state *pose);
 extern int rmp400LogData(const struct rmp400_log_str *log,
 			 const or_pose_estimator_state *pose,
 			 const rmp400_gyro *gyro,

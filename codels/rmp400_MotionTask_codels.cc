@@ -474,7 +474,8 @@ odoAndAsserv(RMP_DEV_TAB **rmp, FE_STR **fe,
 
 	/* log */
 	if (log != NULL)
-		rmp400LogData(log, pose, gyro, gyro_asserv, &cmd, rs_data);
+		//rmp400LogData(log, pose, gyro, gyro_asserv, &cmd, rs_data);
+		rmp400LogPose(log, pose);
 
 publish:
 
