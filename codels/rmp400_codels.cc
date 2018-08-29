@@ -45,6 +45,19 @@ trackControl(RMP_DEV_TAB **rmp, const rmp400_data_str rs_data[2],
 }
 
 
+/* --- Activity DirectTrack --------------------------------------------- */
+
+/** Validation codel trackControl of activity DirectTrack.
+ *
+ * Returns genom_ok.
+ * Throws rmp400_not_connected, rmp400_port_not_found, rmp400_bad_ref,
+ * rmp400_cmd_stop_track, rmp400_motors_off, rmp400_emergency_stop,
+ * rmp400_power_cord_connected, rmp400_invalid_parameter.
+ */
+/* already defined in service Track validation */
+
+
+
 /* --- Function toggleInfuseTrackMode ----------------------------------- */
 
 /** Codel toggleInfuseTrackMode of function toggleInfuseTrackMode.

@@ -377,9 +377,51 @@ Overrides cmd_vel with cmd_vel_Infuse
 a|.Context
 [disc]
   * Interrupts `<<Track>>`
+  * Interrupts `<<DirectTrack>>`
 |===
 
 Stop current Tracking
+
+'''
+
+[[DirectTrack]]
+=== DirectTrack (activity)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Inputs
+[disc]
+ * `double` `v`
+
+ * `double` `w`
+
+a|.Throws
+[disc]
+ * `exception ::rmp400::not_connected`
+
+ * `exception ::rmp400::port_not_found`
+
+ * `exception ::rmp400::bad_ref`
+
+ * `exception ::rmp400::cmd_stop_track`
+
+ * `exception ::rmp400::motors_off`
+
+ * `exception ::rmp400::emergency_stop`
+
+ * `exception ::rmp400::power_cord_connected`
+
+ * `exception ::rmp400::invalid_parameter`
+
+a|.Context
+[disc]
+  * In task `<<TrackTask>>`
+  (frequency 20.0 _Hz_)
+  * Interrupts `<<JoystickOn>>`
+  * Interrupts `<<Track>>`
+|===
+
+Set (v,w) directly with a rosaction
 
 '''
 
