@@ -198,6 +198,7 @@ component rmp400 {
 
   function Stop() {
     doc "Stop current Tracking";
+        codel setZeroVelocity(out rs_mode, out ref);
     interrupts Track, DirectTrack;
   };
 
