@@ -163,7 +163,7 @@ component rmp400 {
     codel <inter>rmp400JoystickOnInter(out rs_mode, out ref) yield ether;
     throw bad_ref, rmplib_error, joystick_error, motors_off,
       emergency_stop, power_cord_connected;
-    interrupts JoystickOn, Track;
+    interrupts JoystickOn, Track, DirectTrack;
   };
 
   /*----------------------------------------------------------------------*/
@@ -188,7 +188,7 @@ component rmp400 {
     task TrackTask;
     throw not_connected, port_not_found, bad_ref, cmd_stop_track,
       motors_off, emergency_stop, power_cord_connected;
-    interrupts JoystickOn, Track;
+    interrupts JoystickOn, Track, DirectTrack;
   };
   
   function toggleInfuseTrackMode() {
